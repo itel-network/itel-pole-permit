@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITEL — ระบบจัดการงานขออนุญาตพาดสาย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#E86A1C; --brand-2:#F5933D; --brand-deep:#C4540E; --brand-soft:#FCEEE1;
+  --ink:#241D17; --ink-2:#4C433A; --muted:#8C8175; --faint:#B6ADA2;
+  --bg:#F4F1EC; --card:#FFFFFF; --border:#ECE5DC; --border-2:#E1D8CD; --soft:#F8F4EF;
+  --sidebar:#201B16; --sidebar-2:#2A231C; --sidebar-line:#372E24; --sidebar-muted:#9C9081;
+  --accent:#E86A1C;
+  --green:#1A8F57; --green-bg:#E7F4ED;
+  --yellow:#B9840F; --yellow-bg:#FAF0D6;
+  --red:#C23E2C; --red-bg:#FBE6E1;
+  --blue:#2A66B8; --blue-bg:#E7EEF9;
+  --shadow-sm:0 1px 2px rgba(60,40,15,.06);
+  --shadow:0 1px 2px rgba(60,40,15,.05), 0 8px 24px -12px rgba(60,40,15,.18);
+  --shadow-lg:0 24px 60px -16px rgba(40,25,8,.32);
+  --r:14px; --r-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"IBM Plex Sans Thai","IBM Plex Sans","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 0}
+::selection{background:var(--brand-soft)}
+
+/* ===== App shell ===== */
+.app{display:flex;min-height:100vh}
+
+/* ===== Sidebar ===== */
+.sidebar{width:256px;flex-shrink:0;background:var(--sidebar);color:#EDE6DC;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-right:1px solid #100C09}
+.brand{display:flex;align-items:center;gap:13px;padding:22px 22px 20px}
+.logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,var(--brand-2),var(--brand-deep));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;letter-spacing:.5px;box-shadow:0 6px 16px -4px rgba(232,106,28,.6)}
+.logo-text{font-size:19px;font-weight:700;letter-spacing:.4px;color:#fff;line-height:1.1}
+.logo-sub{font-size:10.5px;color:var(--sidebar-muted);font-weight:400;margin-top:3px;letter-spacing:.2px}
+.nav{padding:8px 14px;flex:1;overflow-y:auto}
+.nav-label{font-size:10.5px;font-weight:600;color:#6F6557;text-transform:uppercase;letter-spacing:1.2px;padding:14px 10px 8px}
+.nav-item{width:100%;display:flex;align-items:center;gap:12px;background:none;border:none;color:#C4B9AB;padding:11px 12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;text-align:left;position:relative;transition:background .15s,color .15s;margin-bottom:2px}
+.nav-item svg{width:19px;height:19px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#F1E9DE}
+.nav-item.active{background:linear-gradient(100deg,rgba(232,106,28,.20),rgba(232,106,28,.07));color:#fff}
+.nav-item.active svg{stroke:var(--brand-2);opacity:1}
+.nav-item.active::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:3.5px;border-radius:0 4px 4px 0;background:var(--brand)}
+.sidebar-foot{padding:14px;border-top:1px solid var(--sidebar-line)}
+.conn-pill{display:flex;align-items:center;gap:9px;font-size:12px;color:#CDC2B4;background:var(--sidebar-2);border:1px solid var(--sidebar-line);padding:9px 12px;border-radius:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;box-shadow:0 0 0 3px rgba(185,132,15,.18)}
+.dot.on{background:#34C97A;box-shadow:0 0 0 3px rgba(52,201,122,.18)}
+
+/* ===== Main ===== */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 30px;height:72px}
+.topbar-title h1{font-size:19px;font-weight:600;color:var(--ink);letter-spacing:-.1px}
+.topbar-title p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.seg{display:flex;align-items:center;gap:7px;background:var(--soft);border:1px solid var(--border);padding:4px;border-radius:11px}
+.seg-label{font-size:11px;font-weight:600;color:var(--muted);padding:0 6px 0 8px;letter-spacing:.3px}
+.ws-btn{background:none;border:none;color:var(--ink-2);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:.15s;white-space:nowrap}
+.ws-btn:hover{color:var(--ink)}
+.ws-btn.active{background:var(--card);color:var(--brand-deep);box-shadow:var(--shadow-sm);border:1px solid var(--border-2)}
+.ws-note{font-size:11.5px;color:var(--yellow);font-weight:600}
+
+.content{padding:26px 30px 64px;max-width:1540px;width:100%;margin:0 auto}
+/* Panels are always rendered at opacity:1 when active — no opacity/transform entrance
+   animation, so every capture context (html-to-image, PDF/PPTX export, reduced-motion)
+   reliably sees the content instead of a hidden first frame. */
+.panel{display:none}
+.panel.active{display:block;opacity:1}
+
+/* ===== Cards & primitives ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.section-title{font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.7px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section-title .num{width:25px;height:25px;border-radius:8px;background:linear-gradient(150deg,var(--brand-2),var(--brand-deep));color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;box-shadow:0 3px 8px -2px rgba(232,106,28,.5)}
+
+label.fl{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--card);color:var(--ink);font-size:13.5px;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+input:hover,select:hover,textarea:hover{border-color:#D2C7B9}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3.5px rgba(232,106,28,.14)}
+textarea{resize:vertical;min-height:64px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238C8175' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:32px}
+
+.btn{border:none;border-radius:var(--r-sm);padding:10px 17px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;transition:.15s;white-space:nowrap}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:linear-gradient(140deg,var(--brand-2),var(--brand-deep));color:#fff;box-shadow:0 4px 14px -4px rgba(232,106,28,.55)}
+.btn-primary:hover{filter:brightness(1.05);box-shadow:0 6px 18px -4px rgba(232,106,28,.6)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-ghost{background:var(--card);color:var(--ink-2);border:1px solid var(--border-2)}
+.btn-ghost:hover{background:var(--soft);border-color:#D2C7B9;color:var(--ink)}
+.btn-accent{background:var(--ink);color:#fff}
+.btn-accent:hover{background:#352c22}
+.btn-sm{padding:7px 13px;font-size:12.5px}
+.muted{color:var(--muted);font-size:12.5px}
+
+/* ===== Filters ===== */
+.filter-card{padding:20px 22px;margin-bottom:18px}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+.chip{background:var(--brand-soft);border:1px solid #F3DCC6;border-radius:20px;padding:5px 9px 5px 13px;font-size:12px;display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.chip b{color:var(--brand-deep);font-weight:700}
+.chip .x{cursor:pointer;width:17px;height:17px;border-radius:50%;background:rgba(196,84,14,.16);color:var(--brand-deep);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;transition:.12s}
+.chip .x:hover{background:var(--red);color:#fff}
+
+/* ===== Stat cards ===== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:17px 19px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 12px 28px -14px rgba(60,40,15,.28)}
+.stat-h{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.stat-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-ic svg{width:18px;height:18px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ic-brand{background:var(--brand-soft);color:var(--brand-deep)} .ic-brand svg{stroke:var(--brand-deep)}
+.ic-blue{background:var(--blue-bg);color:var(--blue)} .ic-blue svg{stroke:var(--blue)}
+.ic-green{background:var(--green-bg);color:var(--green)} .ic-green svg{stroke:var(--green)}
+.ic-amber{background:var(--yellow-bg);color:var(--yellow)} .ic-amber svg{stroke:var(--yellow)}
+.stat-l{font-size:12.5px;color:var(--muted);font-weight:500}
+.stat-v{font-size:30px;font-weight:700;color:var(--ink);font-family:"IBM Plex Sans","IBM Plex Sans Thai",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1}
+
+/* ===== Table ===== */
+.table-card{padding:0;overflow:hidden}
+.table-tools{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+thead th{background:var(--soft);color:var(--ink-2);text-align:left;padding:12px 14px;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border-2);position:sticky;top:0;transition:.12s}
+thead th:hover{background:#F1EBE2;color:var(--ink)}
+thead th .ar{opacity:.35;font-size:9px;margin-left:5px}
+thead th.sorted{color:var(--brand-deep)}
+thead th.sorted .ar{opacity:1;color:var(--brand)}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--border)}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--brand-soft)}
+.num-cell{text-align:right;font-variant-numeric:tabular-nums;font-family:"IBM Plex Sans","IBM Plex Sans Thai",sans-serif}
+.empty{padding:52px;text-align:center;color:var(--muted)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:600}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-gray{background:var(--soft);color:var(--muted)}
+
+.pager{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.pager-btns{display:flex;gap:5px;align-items:center}
+.pg{min-width:35px;height:35px;border:1px solid var(--border-2);background:var(--card);border-radius:9px;cursor:pointer;font-size:13px;color:var(--ink-2);font-family:inherit;transition:.12s}
+.pg:hover:not(:disabled){background:var(--soft);border-color:#D2C7B9}
+.pg.active{background:linear-gradient(140deg,var(--brand-2),var(--brand-deep));color:#fff;border-color:transparent;box-shadow:0 4px 12px -4px rgba(232,106,28,.5)}
+.pg:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== Form ===== */
+.form-card{padding:22px;margin-bottom:18px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
+.req{color:var(--red)}
+.form-actions{display:flex;gap:11px;justify-content:flex-end;margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+
+/* ===== Settings ===== */
+.set-card{padding:22px;margin-bottom:18px}
+.code-box{background:#1B1611;color:#E7D7C4;border-radius:12px;padding:18px;font-family:"IBM Plex Mono","Consolas",monospace;font-size:12px;overflow-x:auto;white-space:pre;line-height:1.6;max-height:440px;overflow-y:auto;border:1px solid #2A231C}
+.hint{background:var(--brand-soft);border-left:3px solid var(--brand);padding:13px 16px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:12.5px;color:var(--ink-2);margin-top:16px;line-height:1.7}
+
+/* ===== Modal ===== */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(33,22,10,.5);backdrop-filter:blur(3px);z-index:100;align-items:flex-start;justify-content:center;padding:48px 16px;overflow-y:auto}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:18px;max-width:800px;width:100%;box-shadow:var(--shadow-lg);animation:pop .2s ease;overflow:hidden}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.modal-hd{background:var(--card);color:var(--ink);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.modal-hd h3{font-size:16.5px;font-weight:600;display:flex;align-items:center;gap:11px}
+.modal-hd h3::before{content:"";width:8px;height:22px;border-radius:4px;background:linear-gradient(var(--brand-2),var(--brand-deep))}
+.modal-hd .close{cursor:pointer;font-size:26px;line-height:1;color:var(--muted);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;transition:.12s}
+.modal-hd .close:hover{background:var(--soft);color:var(--ink)}
+.modal-bd{padding:24px;max-height:62vh;overflow-y:auto}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.det{padding:12px 14px;background:var(--soft);border:1px solid var(--border);border-radius:11px}
+.det .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:600}
+.det .vv{font-size:13.5px;font-weight:600;word-break:break-word;color:var(--ink)}
+.det input,.det select,.det textarea{font-size:13px;padding:8px 10px;background:var(--card)}
+.det textarea{min-height:48px}
+.modal-ft{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;border-top:1px solid var(--border);flex-wrap:wrap;background:var(--soft)}
+
+/* ===== Dashboard ===== */
+.dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.dash-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:18px}
+@media(max-width:900px){.dash-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.dash-cards{grid-template-columns:1fr}}
+.dcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.dcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+.dcard.blue::before{background:var(--blue)} .dcard.green::before{background:var(--green)} .dcard.yellow::before{background:var(--yellow)}
+.dcard .dv{font-size:30px;font-weight:700;color:var(--ink);font-family:"IBM Plex Sans","IBM Plex Sans Thai",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1.05}
+.dcard .dl{font-size:13px;color:var(--ink-2);margin-top:4px;font-weight:600}
+.dcard .ds{font-size:11.5px;color:var(--muted);margin-top:8px}
+.chart-card{padding:20px 22px;margin-bottom:18px}
+.chart-title{font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chart-legend{font-size:12px;color:var(--muted);font-weight:400;display:inline-flex;align-items:center;gap:5px}
+.lg{display:inline-block;width:11px;height:11px;border-radius:3px;margin-left:7px}
+.lg-sn{background:var(--brand)} .lg-so{background:var(--green)}
+.dash-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.dash-2col{grid-template-columns:1fr}}
+.vbars{display:flex;align-items:flex-end;gap:10px;height:230px;padding-top:26px;overflow-x:auto}
+.vcol{flex:1;min-width:30px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:8px}
+.vgroup{display:flex;align-items:flex-end;gap:4px;height:100%;width:100%;justify-content:center}
+.vbar{width:18px;max-width:46%;border-radius:5px 5px 0 0;min-height:3px;position:relative;transition:opacity .15s}
+.vbar:hover{opacity:.82}
+.vbar.sn{background:linear-gradient(var(--brand-2),var(--brand))}
+.vbar.so{background:linear-gradient(#27A56C,var(--green))}
+.vbar .bval{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.vlbl{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:500}
+.hbars{display:flex;flex-direction:column;gap:13px}
+.hrow{display:grid;grid-template-columns:minmax(90px,160px) 1fr 52px;align-items:center;gap:12px;font-size:12.5px;color:var(--ink-2)}
+.htrack{background:var(--soft);border-radius:7px;height:20px;overflow:hidden;border:1px solid var(--border)}
+.hfill{height:100%;border-radius:7px;background:var(--brand);min-width:3px;transition:width .4s ease}
+.hval{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.dash-empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* ===== Toast ===== */
+.toast{position:fixed;bottom:26px;right:26px;background:var(--ink);color:#fff;padding:14px 19px;border-radius:12px;box-shadow:var(--shadow-lg);font-size:13.5px;z-index:200;opacity:0;transform:translateY(14px);transition:.25s;display:flex;align-items:center;gap:9px;max-width:360px;font-weight:500}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* ===== Responsive ===== */
+@media(max-width:980px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:sticky;top:0;z-index:40;flex-direction:row;align-items:center;border-right:none;border-bottom:1px solid #100C09;padding:0 6px;overflow-x:auto}
+  .brand{padding:12px 14px;flex-shrink:0}
+  .logo-sub{display:none}
+  .nav{display:flex;padding:0;flex:1;overflow-x:auto}
+  .nav-label{display:none}
+  .nav-item{width:auto;white-space:nowrap;margin-bottom:0;padding:10px 13px}
+  .nav-item.active::before{display:none}
+  .nav-item span.nav-tx{display:none}
+  .sidebar-foot{display:none}
+  .topbar{height:auto;padding:12px 18px;flex-wrap:wrap}
+  .content{padding:18px 16px 48px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){.stats{grid-template-columns:1fr}.seg-label{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo-mark">IT</div>
+      <div>
+        <div class="logo-text">ITEL</div>
+        <div class="logo-sub">ระบบขออนุญาตพาดสาย</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">เมนูหลัก</div>
+      <button class="nav-item tab active" data-tab="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><span class="nav-tx">ค้นหา / กรองข้อมูล</span></button>
+      <button class="nav-item tab" data-tab="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg><span class="nav-tx">แดชบอร์ด</span></button>
+      <button class="nav-item tab" data-tab="entry"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="nav-tx">กรอกข้อมูลใหม่</span></button>
+      <button class="nav-item tab" data-tab="settings"><svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.6"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.6"/></svg><span class="nav-tx">ตั้งค่าระบบ</span></button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="conn-pill"><span class="dot" id="connDot"></span><span id="connTxt">ยังไม่เชื่อมต่อ</span></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="pageTitle">ค้นหา / กรองข้อมูล</h1>
+        <p id="pageSub">สืบค้นและกรองรายการขออนุญาตพาดสาย</p>
+      </div>
+      <div class="topbar-right">
+        <div class="seg">
+          <span class="seg-label">ชุดข้อมูล</span>
+          <button class="ws-btn active" data-ws="sn">SN</button>
+          <button class="ws-btn" data-ws="so">Service Order</button>
+        </div>
+        <span class="ws-note" id="wsNote"></span>
+      </div>
+    </header>
+
+    <div class="content">
+
+    <!-- ============ TAB 1: SEARCH ============ -->
+    <section class="panel active" id="panel-search" data-screen-label="ค้นหา">
+      <div class="card filter-card">
+        <div class="section-title">ตัวกรองข้อมูล</div>
+        <div class="filter-grid" id="filterGrid"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-h"><span class="stat-ic ic-brand"><svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg></span><span class="stat-l">แถวทั้งหมด</span></div><div class="stat-v" id="st_total">0</div></div>
+        <div class="stat"><div class="stat-h"><span class="stat-ic ic-blue"><svg viewBox="0 0 24 24" fill="none"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></span><span class="stat-l">ที่กรองแล้ว</span></div><div class="stat-v" id="st_filtered">0</div></div>
+        <div class="stat"><div class="stat-h"><span class="stat-ic ic-green"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg></span><span class="stat-l">อนุญาตแล้ว</span></div><div class="stat-v" id="st_approved">0</div></div>
+        <div class="stat"><div class="stat-h"><span class="stat-ic ic-amber"><svg viewBox="0 0 24 24" fill="none"><polyline points="3 13 8 13 11 5 16 19 19 13 21 13"/></svg></span><span class="stat-l">ระยะทางรวม (km)</span></div><div class="stat-v" id="st_km">0</div></div>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-tools">
+          <div class="muted" id="tblInfo">แสดง 0 รายการ</div>
+          <div style="display:flex;gap:9px">
+            <button class="btn btn-ghost btn-sm" id="loadBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 4 5-4"/><path d="M5 21h14"/></svg>โหลดจาก Google Sheets</button>
+            <button class="btn btn-ghost btn-sm" id="seedBtn"><svg viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v5l-4 9a2 2 0 002 3h8a2 2 0 002-3l-4-9V3"/></svg>ข้อมูลตัวอย่าง</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="tbl">
+            <thead><tr id="thead"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span class="muted">ต่อหน้า</span>
+            <select id="pageSize" style="width:auto"><option>10</option><option>25</option><option>50</option><option>100</option></select>
+          </div>
+          <div class="pager-btns" id="pagerBtns"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TAB: DASHBOARD ============ -->
+    <section class="panel" id="panel-dashboard" data-screen-label="แดชบอร์ด">
+      <div class="dash-head">
+        <div class="section-title" style="margin:0">ภาพรวมข้อมูล (SN + Service Order)</div>
+        <button class="btn btn-ghost btn-sm" id="dashRefresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>รีเฟรชข้อมูล</button>
+      </div>
+      <div id="dashCards"></div>
+      <div class="card chart-card">
+        <div class="chart-title">จำนวนรายการต่อปี
+          <span class="chart-legend"><span class="lg lg-sn"></span>SN <span class="lg lg-so"></span>Service Order</span>
+        </div>
+        <div id="dashYear"></div>
+      </div>
+      <div class="dash-2col">
+        <div class="card chart-card">
+          <div class="chart-title">สัดส่วนสถานะ PEA/MEA (รวม SN+SO)</div>
+          <div id="dashStatus"></div>
+        </div>
+        <div class="card chart-card">
+          <div class="chart-title">การยื่นรายเดือน
+            <span class="muted" style="font-weight:400;font-size:11.5px">(อ้างอิงวันที่ออกหนังสือ NBTC/PEA — เฉพาะ SN)</span>
+          </div>
+          <div style="margin:2px 0 16px"><label class="fl" style="display:inline;margin-right:9px">ปี</label><select id="dashMonthYear" style="width:auto"></select></div>
+          <div id="dashMonthly"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TAB 3: ENTRY ============ -->
+    <section class="panel" id="panel-entry" data-screen-label="กรอกข้อมูล">
+      <form id="entryForm">
+        <div class="card form-card">
+          <div class="section-title"><span class="num">1</span> ข้อมูลพื้นฐานเส้นทาง</div>
+          <div class="fgrid">
+            <div><label class="fl">Service NODE <span class="req">*</span></label><input name="node" required></div>
+            <div><label class="fl">ปี (ค.ศ.) <span class="req">*</span></label><input name="year" type="number" min="2000" max="2100" required placeholder="เช่น 2026"></div>
+            <div><label class="fl">ประเภทงาน <span class="req">*</span></label>
+              <select name="type" id="type_sel" required>
+                <option value="">— เลือก —</option>
+                <option>ขยายโครงข่าย</option>
+                <option>จัดระเบียบสาย</option>
+                <option>Replace Cable</option>
+                <option>สร้างท่อร้อยสาย</option>
+                <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+              </select>
+              <input name="type_other" id="type_other" placeholder="ระบุประเภทงาน..." style="display:none;margin-top:8px"></div>
+            <div><label class="fl">ชื่อเส้นทาง <span class="req">*</span></label><input name="route" required></div>
+            <div><label class="fl">จังหวัด <span class="req">*</span></label><select name="prov" id="prov_sel" required><option value="">— เลือก —</option></select></div>
+            <div><label class="fl">การไฟฟ้าเขต <span class="req">*</span></label><input name="zone" required></div>
+            <div><label class="fl">เขตการไฟฟ้า <span class="req">*</span></label><input name="peazone" required></div>
+          </div>
+        </div>
+        <div class="card form-card">
+          <div class="section-title"><span class="num">2</span> ข้อมูลสายและเสา</div>
+          <div class="fgrid">
+            <div><label class="fl">ขนาดสาย Core <span class="req">*</span></label>
+              <select name="core" id="core_sel" required><option value="">— เลือก —</option>
+                <option>12</option><option>24</option><option>60</option>
+                <option>120</option><option>144</option><option>216</option>
+                <option value="อื่นๆ">อื่นๆ (กรอกเอง)</option>
+              </select>
+              <input name="core_other" id="core_other" placeholder="ระบุขนาด Core..." style="display:none;margin-top:8px"></div>
+            <div><label class="fl">Diameter (mm.) <span class="req">*</span></label><input name="diameter" type="number" step="0.1" required></div>
+            <div><label class="fl">ระยะทาง (km) <span class="req">*</span></label><input name="km" type="number" step="0.001" required></div>
+            <div><label class="fl">จำนวน (ต้น) <span class="req">*</span></label><input name="poles" type="number" min="0" required></div>
+            <div><label class="fl">จำนวนเสาเขียว</label><input name="poles_green" type="number" min="0"></div>
+            <div><label class="fl">จำนวนเสาแดง</label><input name="poles_red" type="number" min="0"></div>
+            <div><label class="fl">จำนวนเสาเทา</label><input name="poles_gray" type="number" min="0"></div>
+            <div><label class="fl">ไม่ขออนุญาต</label>
+              <select name="no_permit"><option value="">ไม่ระบุ</option><option>ใช่</option><option>ไม่</option></select></div>
+          </div>
+        </div>
+        <div class="card form-card">
+          <div class="section-title"><span class="num">3</span> เอกสาร NBTC</div>
+          <div class="fgrid">
+            <div><label class="fl">วันที่ออกหนังสือ NBTC</label><input name="nbtc_issue_date" type="date"></div>
+            <div><label class="fl">เลขที่ NBTC</label><input name="nbtc_no"></div>
+            <div><label class="fl">วันที่อนุญาต NBTC</label><input name="nbtc_permit_date" type="date"></div>
+            <div><label class="fl">เลขที่อนุญาต NBTC</label><input name="nbtc_permit_no"></div>
+          </div>
+        </div>
+        <div class="card form-card">
+          <div class="section-title"><span class="num">4</span> เอกสาร PEA/MEA</div>
+          <div class="fgrid">
+            <div><label class="fl">วันที่ออกหนังสือ PEA/MEA</label><input name="pea_issue_date" type="date"></div>
+            <div><label class="fl">เลขที่หนังสือออก / เลขที่เส้นทาง (CCM)</label><input name="pea_doc_no"></div>
+            <div><label class="fl">เลขที่คำร้อง (TAMS) / เลขที่รับเรื่อง (CCM)</label><input name="tams_no"></div>
+            <div><label class="fl">เลขที่หนังสือค่าดำเนินการก่อน</label><input name="fee_doc_no"></div>
+            <div><label class="fl">ลงวันที่ (ค่าดำเนินการ)</label><input name="fee_date" type="date"></div>
+          </div>
+        </div>
+        <div class="card form-card">
+          <div class="section-title"><span class="num">5</span> ผลการอนุญาตพาดสาย</div>
+          <div class="fgrid">
+            <div><label class="fl">วันที่อนุญาตพาดสาย</label><input name="permit_date" type="date"></div>
+            <div><label class="fl">เลขที่หนังสืออนุญาตพาดสาย</label><input name="permit_doc_no"></div>
+            <div><label class="fl">เลขที่อนุญาต</label><input name="permit_no"></div>
+            <div style="grid-column:1/-1"><label class="fl">หมายเหตุ</label><textarea name="note"></textarea></div>
+            <div style="grid-column:1/-1"><label class="fl">Link เก็บเอกสาร</label><input name="doc_link" type="url" placeholder="วางลิงก์เอกสาร เช่น https://drive.google.com/..."></div>
+          </div>
+          <div class="form-actions">
+            <button type="reset" class="btn btn-ghost">ล้างฟอร์ม</button>
+            <button type="submit" class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>บันทึกข้อมูล</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ TAB 4: SETTINGS ============ -->
+    <section class="panel" id="panel-settings" data-screen-label="ตั้งค่า">
+      <div class="card set-card">
+        <div class="section-title">การเชื่อมต่อ Google Sheets</div>
+        <div class="fgrid">
+          <div style="grid-column:1/-1"><label class="fl">Google Apps Script Web App URL</label>
+            <input id="set_url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+          <div><label class="fl">ชื่อ Sheet</label><input id="set_sheet" value="SN" placeholder="เช่น Data"></div>
+        </div>
+        <div style="display:flex;gap:11px;margin-top:18px;flex-wrap:wrap">
+          <button class="btn btn-accent" id="testBtn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>ทดสอบการเชื่อมต่อ</button>
+          <button class="btn btn-primary" id="saveSetBtn"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>บันทึกการตั้งค่า</button>
+          <button class="btn btn-ghost" id="loadBtn2"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 4 5-4"/><path d="M5 21h14"/></svg>โหลดข้อมูลจาก Google Sheets</button>
+        </div>
+        <div class="hint">📖 <b>การอ่านข้อมูล</b> เชื่อมตรงจากชีต SN อัตโนมัติแล้ว (ผ่าน gviz) ไม่ต้องตั้งค่าอะไรเพิ่ม — กดปุ่ม “โหลดจาก Google Sheets” ได้เลย<br>✍️ <b>การบันทึกข้อมูลใหม่</b> ต้องใส่ Web App URL ด้านบน (deploy Apps Script ตามโค้ดข้างล่าง) หากไม่ใส่ ระบบจะเก็บไว้ใน memory ชั่วคราวเท่านั้น</div>
+      </div>
+
+      <div class="card set-card">
+        <div class="section-title" style="display:flex;justify-content:space-between">
+          <span>โค้ด Google Apps Script (doGet + doPost)</span>
+          <button class="btn btn-ghost btn-sm" id="copyCode"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>คัดลอกโค้ด</button>
+        </div>
+        <p class="muted" style="margin-bottom:14px">วางโค้ดนี้ใน Apps Script ของ Google Sheet → Deploy เป็น Web App (Execute as: Me, Access: Anyone) แล้วนำ URL มาใส่ด้านบน</p>
+        <pre class="code-box" id="codeBox"></pre>
+      </div>
+    </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="mTitle">รายละเอียด</h3><span class="close" id="mClose">×</span></div>
+    <div class="modal-bd"><div class="detail-grid" id="mBody"></div></div>
+    <div class="modal-ft">
+      <span class="muted" id="mHint"></span>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="mCancel">ปิด</button>
+        <button class="btn btn-accent" id="mEdit">✏️ แก้ไข</button>
+        <button class="btn btn-primary" id="mSave">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+// ---------- State ----------
+let DATA = [];           // all rows
+let view = [];           // filtered+sorted
+let sortKey = null, sortDir = 1;
+let page = 1, pageSize = 10;
+let settings = { url:"", sheet:"SN" };
+
+// Google Sheet สำหรับอ่านตรง (gviz) — ไม่ต้อง deploy Apps Script
+const SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
+
+const COLS_SN = [
+  {k:"node",   t:"Service NODE"},
+  {k:"year",   t:"ปี"},
+  {k:"route",  t:"ชื่อเส้นทาง"},
+  {k:"prov",   t:"จังหวัด"},
+  {k:"type",   t:"ประเภทงาน"},
+  {k:"core",   t:"Core"},
+  {k:"km",     t:"ระยะทาง (km)", num:true},
+  {k:"poles",  t:"จำนวนเสา (ต้น)", num:true},
+  {k:"zone",   t:"การไฟฟ้าเขต"},
+  {k:"peazone",t:"เขตการไฟฟ้า"},
+  {k:"status", t:"สถานะ PEA/MEA", badge:true},
+];
+
+// ทุกฟิลด์ที่แก้ไขได้ใน modal รายละเอียด
+const EDIT_FIELDS_SN = [
+  {k:"node", t:"Service NODE"},
+  {k:"year", t:"ปี (ค.ศ.)", type:"number"},
+  {k:"type", t:"ประเภทงาน"},
+  {k:"route", t:"ชื่อเส้นทาง"},
+  {k:"prov", t:"จังหวัด"},
+  {k:"zone", t:"การไฟฟ้าเขต"},
+  {k:"peazone", t:"เขตการไฟฟ้า"},
+  {k:"core", t:"ขนาดสาย Core", type:"number"},
+  {k:"diameter", t:"Diameter (mm.)", type:"number"},
+  {k:"km", t:"ระยะทาง (km)", type:"number"},
+  {k:"poles", t:"จำนวน (ต้น)", type:"number"},
+  {k:"poles_green", t:"จำนวนเสาเขียว", type:"number"},
+  {k:"poles_red", t:"จำนวนเสาแดง", type:"number"},
+  {k:"poles_gray", t:"จำนวนเสาเทา", type:"number"},
+  {k:"no_permit", t:"ไม่ขออนุญาต"},
+  {k:"nbtc_issue_date", t:"วันที่ออกหนังสือ NBTC", type:"date"},
+  {k:"nbtc_no", t:"เลขที่ NBTC"},
+  {k:"nbtc_permit_date", t:"วันที่อนุญาต NBTC", type:"date"},
+  {k:"nbtc_permit_no", t:"เลขที่อนุญาต NBTC"},
+  {k:"pea_issue_date", t:"วันที่ออกหนังสือ PEA/MEA", type:"date"},
+  {k:"pea_doc_no", t:"เลขที่หนังสือ PEA/MEA"},
+  {k:"tams_no", t:"เลขที่คำร้อง TAMS"},
+  {k:"fee_doc_no", t:"เลขที่ค่าดำเนินการ"},
+  {k:"fee_date", t:"ลงวันที่ค่าดำเนินการ", type:"date"},
+  {k:"status", t:"สถานะ PEA/MEA"},
+  {k:"start_date", t:"วันเริ่มพาดสาย", type:"date"},
+  {k:"days", t:"จำนวนวัน", type:"number"},
+  {k:"permit_doc_no", t:"เลขที่หนังสืออนุญาต"},
+  {k:"permit_date", t:"วันที่อนุญาตพาดสาย", type:"date"},
+  {k:"permit_no", t:"เลขที่อนุญาต"},
+  {k:"note", t:"หมายเหตุ", type:"textarea"},
+  {k:"doc_link", t:"Link เก็บเอกสาร"},
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- Service Order: schema (อ่านอย่างเดียว) ----------
+const COLS_SO = [
+  {k:"node",    t:"VPN"},
+  {k:"year",    t:"ปี"},
+  {k:"route",   t:"ชื่อเส้นทาง"},
+  {k:"prov",    t:"จังหวัด"},
+  {k:"core",    t:"Core"},
+  {k:"km",      t:"ระยะทาง (km)", num:true},
+  {k:"poles",   t:"จำนวน (ต้น)", num:true},
+  {k:"zone",    t:"การไฟฟ้าเขต"},
+  {k:"peazone", t:"เขตการไฟฟ้า"},
+  {k:"origin",  t:"ต้นทาง"},
+  {k:"dest",    t:"ปลายทาง"},
+  {k:"status",  t:"สถานะ PEA/MEA", badge:true},
+];
+const EDIT_FIELDS_SO = [
+  {k:"node",t:"VPN"},{k:"year",t:"ปี"},{k:"route",t:"ชื่อเส้นทาง"},{k:"prov",t:"จังหวัด"},
+  {k:"core",t:"Core"},{k:"diameter",t:"Diameter (mm.)"},{k:"km",t:"ระยะทาง (km)"},{k:"poles",t:"จำนวน (ต้น)"},
+  {k:"zone",t:"การไฟฟ้าเขต"},{k:"peazone",t:"เขตการไฟฟ้า"},{k:"no_permit",t:"ไม่ขออนุญาต"},
+  {k:"nbtc_no",t:"เลขที่ NBTC"},{k:"nbtc_approve_no",t:"เลขที่เห็นชอบ NBTC"},
+  {k:"pea_doc_no",t:"เลขที่หนังสือออก"},{k:"tams_no",t:"เลขที่คำร้อง (TAMS)"},
+  {k:"status",t:"สถานะ PEA/MEA"},{k:"permit_doc_no",t:"เลขที่หนังสืออนุญาตพาดสาย"},{k:"permit_no",t:"เลขที่ อนุญาต"},
+  {k:"origin",t:"ต้นทาง"},{k:"dest",t:"ปลายทาง"},
+  {k:"note",t:"หมายเหตุ",type:"textarea"},
+  {k:"doc_link",t:"Link เก็บเอกสาร"},
+];
+
+// ---------- Filters config (ต่อ workspace) ----------
+const FILTERS_SN = [
+  {key:"node",   type:"text",  field:"node",    label:"Service NODE"},
+  {key:"year",   type:"sel",   field:"year",    label:"ปี"},
+  {key:"prov",   type:"sel",   field:"prov",    label:"จังหวัด"},
+  {key:"type",   type:"sel",   field:"type",    label:"ประเภทงาน"},
+  {key:"core",   type:"sel",   field:"core",    label:"ขนาดสาย Core"},
+  {key:"zone",   type:"sel",   field:"zone",    label:"การไฟฟ้าเขต"},
+  {key:"peazone",type:"combo", field:"peazone", label:"เขตการไฟฟ้า"},
+  {key:"status", type:"sel",   field:"status",  label:"สถานะ PEA/MEA"},
+  {key:"tams",   type:"text",  field:"tams_no", label:"เลขที่คำร้อง TAMS/CCM"},
+  {key:"nbtc",   type:"text",  field:"nbtc_no", label:"เลขที่ NBTC"},
+];
+const FILTERS_SO = [
+  {key:"node",   type:"text",  field:"node",    label:"VPN"},
+  {key:"year",   type:"sel",   field:"year",    label:"ปี"},
+  {key:"prov",   type:"sel",   field:"prov",    label:"จังหวัด"},
+  {key:"core",   type:"sel",   field:"core",    label:"Core"},
+  {key:"zone",   type:"sel",   field:"zone",    label:"การไฟฟ้าเขต"},
+  {key:"peazone",type:"combo", field:"peazone", label:"เขตการไฟฟ้า"},
+  {key:"status", type:"sel",   field:"status",  label:"สถานะ PEA/MEA"},
+  {key:"route",  type:"text",  field:"route",   label:"ชื่อเส้นทาง"},
+  {key:"origin", type:"text",  field:"origin",  label:"ต้นทาง"},
+  {key:"dest",   type:"text",  field:"dest",    label:"ปลายทาง"},
+];
+
+// ---------- Workspaces ----------
+const WORKSPACES = {
+  sn: { title:"SN", sheet:"SN", mode:"labels", canEdit:true, canAdd:true,
+        cols:COLS_SN, editFields:EDIT_FIELDS_SN, filters:FILTERS_SN, cache:null },
+  so: { title:"Service Order", sheet:"Service Order", mode:"so", canEdit:true, canAdd:false,
+        cols:COLS_SO, editFields:EDIT_FIELDS_SO, filters:FILTERS_SO, cache:null },
+};
+let WS = "sn";
+const ws = () => WORKSPACES[WS];
+
+// ตัวชี้ schema ที่ active (เปลี่ยนเมื่อสลับ workspace)
+let COLS = COLS_SN;
+let EDIT_FIELDS = EDIT_FIELDS_SN;
+let FILTERS = {};   // สร้างจาก renderFilterPanel()
+
+// ---------- จังหวัด → การไฟฟ้าเขต (เติมอัตโนมัติในฟอร์มกรอก) ----------
+const ZONE_GROUPS = {
+  "น.1":["เชียงใหม่","ลำพูน","ลำปาง","แม่ฮ่องสอน","เชียงราย","พะเยา"],
+  "น.2":["แพร่","น่าน","อุตรดิตถ์","สุโขทัย","ตาก","พิษณุโลก","กำแพงเพชร","พิจิตร"],
+  "น.3":["นครสวรรค์","เพชรบูรณ์","ชัยนาท","อุทัยธานี","สิงห์บุรี","ลพบุรี"],
+  "ฉ.1":["อุดรธานี","หนองคาย","หนองบัวลำภู","บึงกาฬ","เลย","สกลนคร","นครพนม","ขอนแก่น"],
+  "ฉ.2":["มุกดาหาร","ยโสธร","ร้อยเอ็ด","มหาสารคาม","กาฬสินธุ์","อำนาจเจริญ","ศรีสะเกษ","อุบลราชธานี"],
+  "ฉ.3":["บุรีรัมย์","สุรินทร์","นครราชสีมา","ชัยภูมิ"],
+  "ก.1":["สระแก้ว","สระบุรี","ปราจีนบุรี","ปทุมธานี","พระนครศรีอยุธยา","นครนายก","อ่างทอง"],
+  "ก.2":["ฉะเชิงเทรา","ชลบุรี","ตราด","ระยอง","จันทบุรี"],
+  "ก.3":["นครปฐม","สุพรรณบุรี","สมุทรสาคร","กาญจนบุรี"],
+  "ต.1":["สมุทรสงคราม","ระนอง","ประจวบคีรีขันธ์","เพชรบุรี","ราชบุรี","ชุมพร"],
+  "ต.2":["นครศรีธรรมราช","พังงา","ภูเก็ต","สุราษฎร์ธานี","กระบี่","ตรัง"],
+  "ต.3":["สตูล","สงขลา","ยะลา","นราธิวาส","พัทลุง","ปัตตานี"],
+  "นครหลวง":["กรุงเทพมหานคร","นนทบุรี","สมุทรปราการ"],
+};
+const PROV_ZONE = {};
+for(const z in ZONE_GROUPS) ZONE_GROUPS[z].forEach(p=> PROV_ZONE[p]=z);
+const THAI_PROVINCES = Object.keys(PROV_ZONE).sort((a,b)=>a.localeCompare(b,"th"));
+
+// ---------- Tabs ----------
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("panel-"+t.dataset.tab).classList.add("active");
+    if(t.dataset.tab==="entry") suggestNextNode();
+    if(t.dataset.tab==="dashboard") openDashboard();
+  };
+});
+
+// ---------- Auto running Service NODE (ต่อจากเลขเดิมในชีต) ----------
+const NODE_PREFIX = "SN", NODE_WIDTH = 5;
+function nextNode(){
+  let max = 0;
+  DATA.forEach(r=>{
+    const m = String(r.node||"").match(/^SN(\d+)$/i);
+    if(m){ const n = parseInt(m[1],10); if(n>max) max = n; }
+  });
+  return NODE_PREFIX + String(max+1).padStart(NODE_WIDTH,"0");
+}
+// เติมเลขถัดไปให้ช่อง Service NODE (ไม่ทับค่าที่ผู้ใช้พิมพ์เอง เว้นแต่ force)
+function suggestNextNode(force){
+  const f = $("entryForm"); if(!f || !f.node) return;
+  if(force || !f.node.value.trim()){ if(DATA.length) f.node.value = nextNode(); }
+  // เติมปีปัจจุบันเป็น ค.ศ. ให้อัตโนมัติ (แก้เองได้)
+  if(f.year && (force || !f.year.value.trim())) f.year.value = new Date().getFullYear();
+}
+
+// (theme toggle removed — light mode only)
+
+// ---------- Toast ----------
+let toastT;
+function toast(msg,type){
+  const t=$("toast"); t.textContent=msg; t.className="toast show "+(type||"");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className="toast",2800);
+}
+
+// ---------- Status badge ----------
+function statusBadge(s){
+  if(!s) return '<span class="badge b-gray">—</span>';
+  const map={"อนุญาต":"b-green","รอดำเนินการ":"b-yellow","ไม่อนุญาต":"b-red","อยู่ระหว่างดำเนินการ":"b-blue"};
+  return '<span class="badge '+(map[s]||"b-gray")+'">'+esc(s)+'</span>';
+}
+
+// ---------- Build table header ----------
+function buildHead(){
+  $("thead").innerHTML = COLS.map(c=>{
+    const sorted = sortKey===c.k ? "sorted":"";
+    const ar = sortKey===c.k ? (sortDir>0?"▲":"▼") : "▲▼";
+    return `<th data-k="${c.k}" class="${sorted}">${esc(c.t)}<span class="ar">${ar}</span></th>`;
+  }).join("");
+  $("thead").querySelectorAll("th").forEach(th=>{
+    th.onclick=()=>{
+      const k=th.dataset.k;
+      if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=1;}
+      apply();
+    };
+  });
+}
+
+// ---------- Populate filter dropdowns ----------
+function uniq(field){
+  return [...new Set(DATA.map(r=>r[field]).filter(v=>v!=null&&v!==""))]
+    .sort((a,b)=> (typeof a==="number"&&typeof b==="number")? a-b : String(a).localeCompare(String(b),"th"));
+}
+function fillSelects(){
+  Object.values(FILTERS).filter(f=>f.type==="sel").forEach(f=>{
+    const sel=$(f.el), cur=sel.value;
+    sel.innerHTML='<option value="">ทั้งหมด</option>'+uniq(f.field).map(v=>`<option>${esc(v)}</option>`).join("");
+    sel.value=cur;
+  });
+  // combo: เติมรายการลง datalist (พิมพ์ค้นหา/เลือกได้)
+  Object.values(FILTERS).filter(f=>f.type==="combo").forEach(f=>{
+    const dl=$("dl_"+f.el.replace(/^f_/,""));
+    if(dl) dl.innerHTML = uniq(f.field).map(v=>`<option value="${esc(v)}"></option>`).join("");
+  });
+}
+
+// ---------- Apply filters/sort/paginate ----------
+function activeFilters(){
+  const out=[];
+  for(const key in FILTERS){
+    const f=FILTERS[key], v=$(f.el).value.trim();
+    if(v) out.push({key,label:f.label,field:f.field,type:f.type,value:v});
+  }
+  return out;
+}
+function apply(){
+  const fs=activeFilters();
+  view = DATA.filter(r=>{
+    return fs.every(f=>{
+      const cell = r[f.field];
+      if(f.type==="text"||f.type==="combo") return String(cell||"").toLowerCase().includes(f.value.toLowerCase());
+      return String(cell)===f.value;
+    });
+  });
+  if(sortKey){
+    view.sort((a,b)=>{
+      let x=a[sortKey], y=b[sortKey];
+      const nx=parseFloat(x), ny=parseFloat(y);
+      if(!isNaN(nx)&&!isNaN(ny)&&COLS.find(c=>c.k===sortKey&&c.num)){ return (nx-ny)*sortDir; }
+      x=String(x==null?"":x); y=String(y==null?"":y);
+      return x.localeCompare(y,"th")*sortDir;
+    });
+  }
+  renderChips(fs); renderStats(); renderTable();
+}
+
+function renderChips(fs){
+  const c=$("chips");
+  if(!fs.length){ c.innerHTML='<span class="muted">ยังไม่มีตัวกรองที่ใช้งาน</span>'; return; }
+  c.innerHTML = fs.map(f=>`<span class="chip"><b>${esc(f.label)}:</b> ${esc(f.value)} <span class="x" data-el="${FILTERS[f.key].el}">×</span></span>`).join("")
+    + `<button class="btn btn-ghost btn-sm" id="clearAll">ล้างทั้งหมด</button>`;
+  c.querySelectorAll(".x").forEach(x=>x.onclick=()=>{ $(x.dataset.el).value=""; apply(); });
+  $("clearAll").onclick=clearAll;
+}
+function clearAll(){ Object.values(FILTERS).forEach(f=>$(f.el).value=""); apply(); }
+
+function renderStats(){
+  $("st_total").textContent = DATA.length.toLocaleString();
+  $("st_filtered").textContent = view.length.toLocaleString();
+  $("st_approved").textContent = view.filter(r=>r.status==="อนุญาต").length.toLocaleString();
+  const km = view.reduce((s,r)=> s + (parseFloat(r.km)||0), 0);
+  $("st_km").textContent = km.toLocaleString(undefined,{maximumFractionDigits:2});
+}
+
+function renderTable(){
+  pageSize = parseInt($("pageSize").value)||10;
+  const pages = Math.max(1, Math.ceil(view.length/pageSize));
+  if(page>pages) page=pages;
+  const start=(page-1)*pageSize;
+  const rows = view.slice(start, start+pageSize);
+  const tb=$("tbody");
+  if(!rows.length){
+    tb.innerHTML=`<tr><td class="empty" colspan="${COLS.length}">ไม่พบข้อมูล — ลองปรับตัวกรอง หรือกด “ข้อมูลตัวอย่าง”</td></tr>`;
+  } else {
+    tb.innerHTML = rows.map(r=>{
+      const idx = DATA.indexOf(r);
+      return "<tr data-i='"+idx+"'>"+COLS.map(c=>{
+        let v=r[c.k];
+        if(c.badge) return "<td>"+statusBadge(v)+"</td>";
+        if(c.num){ const n=parseFloat(v); return "<td class='num-cell'>"+(isNaN(n)?"—":n.toLocaleString(undefined,{maximumFractionDigits:3}))+"</td>"; }
+        return "<td>"+(v==null||v===""?"—":esc(v))+"</td>";
+      }).join("")+"</tr>";
+    }).join("");
+    tb.querySelectorAll("tr").forEach(tr=>tr.onclick=()=>openDetail(parseInt(tr.dataset.i)));
+  }
+  $("tblInfo").textContent = view.length
+    ? `แสดง ${start+1}-${Math.min(start+pageSize,view.length)} จาก ${view.length} รายการ`
+    : "แสดง 0 รายการ";
+  buildHead();
+  renderPager(pages);
+}
+
+function renderPager(pages){
+  const p=$("pagerBtns"); let h="";
+  h+=`<button class="pg" ${page<=1?"disabled":""} data-p="${page-1}">‹</button>`;
+  const win=[]; for(let i=1;i<=pages;i++){ if(i===1||i===pages||Math.abs(i-page)<=1) win.push(i); else if(win[win.length-1]!=="…") win.push("…"); }
+  win.forEach(i=> h+= i==="…" ? `<span class="pg" style="border:none;background:none">…</span>` : `<button class="pg ${i===page?"active":""}" data-p="${i}">${i}</button>`);
+  h+=`<button class="pg" ${page>=pages?"disabled":""} data-p="${page+1}">›</button>`;
+  p.innerHTML=h;
+  p.querySelectorAll("[data-p]").forEach(b=>{ if(!b.disabled) b.onclick=()=>{ page=parseInt(b.dataset.p); renderTable(); }; });
+}
+
+// ---------- Detail / Edit modal ----------
+let editIndex = -1;
+let modalEdit = false;   // false = ดูอย่างเดียว, true = กำลังแก้ไข
+const isISO = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s));
+function closeModal(){ $("modal").classList.remove("show"); editIndex=-1; modalEdit=false; }
+// คัดลอกข้อความลง clipboard (มี fallback รองรับเปิดแบบ file://)
+function copyText(txt){
+  if(!txt) return;
+  const done=()=>toast("คัดลอกลิงก์แล้ว","ok");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done, ()=>fallbackCopy(txt,done));
+  } else { fallbackCopy(txt,done); }
+}
+function fallbackCopy(txt,done){
+  const ta=document.createElement("textarea");
+  ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; ta.style.left="-9999px";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); done && done(); }catch(e){ toast("คัดลอกไม่สำเร็จ","err"); }
+  ta.remove();
+}
+function renderModalBody(){
+  const r=DATA[editIndex]; if(!r) return;
+  const editing = modalEdit && ws().canEdit;
+  $("mBody").innerHTML = EDIT_FIELDS.map(f=>{
+    const v = (r[f.k]==null?"":r[f.k]);
+    if(!editing){
+      // Link เก็บเอกสาร: คลิกข้อความ/ปุ่มเพื่อคัดลอกได้
+      if(f.k==="doc_link" && v){
+        return `<div class="det"><div class="k">${esc(f.t)}</div>`
+          + `<div class="vv copyable" title="คลิกเพื่อคัดลอก" style="word-break:break-all;cursor:pointer">${esc(v)}</div>`
+          + `<button type="button" class="btn btn-ghost btn-sm copy-link" style="margin-top:8px;padding:5px 11px">📋 คัดลอกลิงก์</button></div>`;
+      }
+      const disp = f.k==="status" ? statusBadge(r[f.k]) : (v===""?"—":esc(v));
+      return `<div class="det"><div class="k">${esc(f.t)}</div><div class="vv">${disp}</div></div>`;
+    }
+    // วันที่ที่ไม่ใช่ ISO ให้เป็นช่องข้อความ กันค่าหาย
+    const type = (f.type==="date" && v && !isISO(v)) ? "text" : (f.type||"text");
+    let ctrl;
+    if(type==="textarea") ctrl=`<textarea data-k="${f.k}">${esc(v)}</textarea>`;
+    else ctrl=`<input data-k="${f.k}" type="${type}" value="${esc(v)}" ${type==="number"?'step="any"':''}>`;
+    return `<div class="det"><div class="k">${esc(f.t)}</div>${ctrl}</div>`;
+  }).join("");
+  // ผูกปุ่ม/ข้อความคัดลอกลิงก์
+  $("mBody").querySelectorAll(".copy-link, .copyable").forEach(el=>{
+    el.onclick=()=>{ const box=el.closest(".det").querySelector(".vv"); copyText(box?box.textContent:""); };
+  });
+  // ปุ่ม/ข้อความ footer ตามโหมด
+  const canEdit = ws().canEdit;
+  $("mEdit").style.display = (canEdit && !editing) ? "" : "none";
+  $("mSave").style.display = editing ? "" : "none";
+  $("mCancel").textContent = editing ? "ยกเลิก" : "ปิด";
+  $("mHint").textContent = !canEdit
+    ? "โหมดดูอย่างเดียว (Service Order)"
+    : (editing
+        ? (settings.url
+            ? "แก้ไขแล้วกด “บันทึกการแก้ไข” เพื่อบันทึกกลับ Google Sheets"
+            : "แก้ได้ชั่วคราว (ตั้งค่า Web App URL เพื่อบันทึกถาวร)")
+        : "กด “แก้ไข” เพื่อแก้ข้อมูลในรายการนี้");
+}
+function openDetail(i){
+  const r=DATA[i]; if(!r) return;
+  editIndex = i; modalEdit = false;    // เปิดมาเป็นดูอย่างเดียวเสมอ
+  $("mTitle").textContent = (r.node||"")+" — "+(r.route||"รายละเอียด");
+  renderModalBody();
+  $("modal").classList.add("show");
+}
+function saveEdit(){
+  if(editIndex<0 || !DATA[editIndex]) return;
+  const rec = DATA[editIndex];
+  $("mBody").querySelectorAll("[data-k]").forEach(el=>{ rec[el.dataset.k] = el.value; });
+  NUM_FIELDS.forEach(k=>{ if(rec[k]!=="" && rec[k]!=null && !isNaN(rec[k])) rec[k]=Number(rec[k]); });
+  fillSelects(); apply();
+  if(settings.url){
+    updateToSheet(rec)
+      .then(()=>toast("บันทึกการแก้ไขไป Google Sheets แล้ว","ok"))
+      .catch(err=>toast("แก้ใน memory แล้ว แต่ส่งไป Sheets ไม่สำเร็จ: "+err.message,"err"));
+  } else {
+    toast("แก้ไขแล้ว (memory — ตั้งค่า URL เพื่อบันทึกถาวร)","ok");
+  }
+  closeModal();
+}
+async function updateToSheet(rec){
+  const w = ws();
+  const res = await fetch(settings.url, {
+    method:"POST", mode:"cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify({action:"update", sheet:w.sheet, mode:w.mode, key:"node", record:rec})
+  });
+  const j = await res.json();
+  if(!j || j.ok===false) throw new Error(j && j.error || "update failed");
+  return j;
+}
+$("mEdit").onclick=()=>{ modalEdit=true; renderModalBody(); };
+$("mSave").onclick=saveEdit;
+$("mCancel").onclick=()=>{ if(modalEdit){ modalEdit=false; renderModalBody(); } else closeModal(); };
+$("mClose").onclick=closeModal;
+$("modal").onclick=e=>{ if(e.target===$("modal")) closeModal(); };
+
+// ---------- Filter panel (สร้างจาก workspace ปัจจุบัน) ----------
+function renderFilterPanel(){
+  FILTERS = {};
+  $("filterGrid").innerHTML = ws().filters.map(f=>{
+    const id = "f_"+f.key;
+    FILTERS[f.key] = {el:id, type:f.type, field:f.field, label:f.label};
+    if(f.type==="combo")  // พิมพ์ค้นหาได้ + มีรายการให้เลือก (datalist)
+      return `<div><label class="fl">${esc(f.label)}</label><input id="${id}" list="dl_${f.key}" placeholder="พิมพ์ค้นหา/เลือก ${esc(f.label)}..."><datalist id="dl_${f.key}"></datalist></div>`;
+    if(f.type==="text")
+      return `<div><label class="fl">${esc(f.label)}</label><input id="${id}" placeholder="ค้นหา ${esc(f.label)}..."></div>`;
+    return `<div><label class="fl">${esc(f.label)}</label><select id="${id}"><option value="">ทั้งหมด</option></select></div>`;
+  }).join("");
+  Object.values(FILTERS).forEach(f=>{
+    $(f.el).addEventListener(f.type==="sel"?"change":"input", ()=>{ page=1; apply(); });
+  });
+}
+$("pageSize").addEventListener("change", ()=>{ page=1; renderTable(); });
+
+// ---------- สลับ workspace (SN | Service Order) ----------
+function switchWorkspace(key){
+  if(!WORKSPACES[key] || key===WS) return;
+  WS = key;
+  const w = ws();
+  document.querySelectorAll(".ws-btn").forEach(b=>b.classList.toggle("active", b.dataset.ws===key));
+  // แท็บกรอกข้อมูล/ปุ่มข้อมูลตัวอย่าง เฉพาะ workspace ที่เพิ่มรายการใหม่ได้
+  const entryTab=document.querySelector('.tab[data-tab="entry"]');
+  entryTab.style.display = w.canAdd ? "" : "none";
+  $("seedBtn").style.display = w.canAdd ? "" : "none";
+  if(!w.canAdd && document.querySelector('.tab[data-tab="entry"]').classList.contains("active"))
+    document.querySelector('.tab[data-tab="search"]').click();
+  $("wsNote").textContent = w.canEdit ? "" : "โหมดดูอย่างเดียว";
+  // เปลี่ยน schema ที่ active
+  COLS = w.cols; EDIT_FIELDS = w.editFields;
+  sortKey=null; sortDir=1; page=1;
+  renderFilterPanel();
+  if(w.cache){ DATA = w.cache; fillSelects(); apply(); }
+  else { DATA = []; fillSelects(); apply(); loadDirect(); }
+}
+document.querySelectorAll(".ws-btn").forEach(b=> b.onclick=()=>switchWorkspace(b.dataset.ws));
+
+// ---------- ประเภทงาน: เลือก "อื่นๆ" → แสดงช่องพิมพ์เอง ----------
+function toggleTypeOther(){
+  const sel=$("type_sel"), other=$("type_other"); if(!sel||!other) return;
+  if(sel.value==="อื่นๆ"){ other.style.display="block"; other.required=true; }
+  else { other.style.display="none"; other.required=false; other.value=""; }
+}
+$("type_sel").addEventListener("change", ()=>{ toggleTypeOther(); if($("type_sel").value==="อื่นๆ") $("type_other").focus(); });
+
+// ---------- ขนาดสาย Core: เลือก "อื่นๆ" → แสดงช่องพิมพ์เอง ----------
+function toggleCoreOther(){
+  const sel=$("core_sel"), other=$("core_other"); if(!sel||!other) return;
+  if(sel.value==="อื่นๆ"){ other.style.display="block"; other.required=true; }
+  else { other.style.display="none"; other.required=false; other.value=""; }
+}
+$("core_sel").addEventListener("change", ()=>{ toggleCoreOther(); if($("core_sel").value==="อื่นๆ") $("core_other").focus(); });
+
+// ---------- จังหวัด (select 77 จังหวัด) → เติม "การไฟฟ้าเขต" อัตโนมัติ ----------
+$("prov_sel").innerHTML = '<option value="">— เลือก —</option>'
+  + THAI_PROVINCES.map(v=>`<option>${esc(v)}</option>`).join("");
+$("prov_sel").addEventListener("change", ()=>{
+  const z = PROV_ZONE[$("prov_sel").value.trim()];
+  if(z !== undefined) $("entryForm").zone.value = z;
+});
+
+// ---------- Form submit ----------
+$("entryForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target), rec={};
+  fd.forEach((v,k)=> rec[k]= v);
+  // ประเภทงาน "อื่นๆ" → ใช้ข้อความที่พิมพ์เองแทน
+  if(rec.type==="อื่นๆ") rec.type=(rec.type_other||"").trim();
+  delete rec.type_other;
+  // ขนาดสาย Core "อื่นๆ" → ใช้ข้อความที่พิมพ์เองแทน
+  if(rec.core==="อื่นๆ") rec.core=(rec.core_other||"").trim();
+  delete rec.core_other;
+  // normalize numerics
+  ["year","core","km","diameter","poles","poles_green","poles_red","poles_gray","days"].forEach(k=>{
+    if(rec[k]!=="" && rec[k]!=null && !isNaN(rec[k])) rec[k]=Number(rec[k]);
+  });
+  rec._ts = new Date().toISOString();
+  const savedNode = rec.node || "";
+
+  let ok=false, viaSheet=false;
+  if(settings.url){
+    try{ await postToSheet(rec); ok=true; viaSheet=true; }
+    catch(err){ DATA.unshift(rec); toast("ส่งไป Sheets ไม่สำเร็จ — บันทึกใน memory แทน","err"); }
+  } else {
+    DATA.unshift(rec); ok=true;
+  }
+  fillSelects(); page=1; apply();
+  e.target.reset();
+  document.querySelector('.tab[data-tab="search"]').click();
+  if(ok){
+    toast(viaSheet
+      ? "✓ บันทึก "+savedNode+" ลง Google Sheets สำเร็จ"
+      : "✓ บันทึก "+savedNode+" สำเร็จ (memory — ยังไม่ตั้งค่า URL)", "ok");
+  }
+});
+// กดปุ่ม "ล้างฟอร์ม" แล้วเติมเลข Service NODE ถัดไปกลับให้
+$("entryForm").addEventListener("reset", ()=> setTimeout(()=>{ suggestNextNode(true); toggleTypeOther(); toggleCoreOther(); }, 0));
+
+// ---------- Google Sheets I/O ----------
+async function postToSheet(rec){
+  const res = await fetch(settings.url, {
+    method:"POST", mode:"cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify({action:"add", sheet:settings.sheet, record:rec})
+  });
+  const j = await res.json();
+  if(!j || j.ok===false) throw new Error(j && j.error || "post failed");
+  DATA.unshift(rec);
+  return j;
+}
+// แปลงค่า cell จาก gviz: Date(y,m,d) → ISO yyyy-mm-dd, อื่นๆ คืนค่า v
+function gvizCell(cell){
+  if(cell==null || cell.v==null) return "";
+  const v = cell.v;
+  if(typeof v==="string"){
+    const m = v.match(/^Date\((\d+),(\d+),(\d+)/);
+    if(m){
+      const y=+m[1], mo=(+m[2]+1), d=+m[3];
+      return y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    }
+  }
+  return v;
+}
+// --- โหมด labels (ชีต SN): หัวตารางอยู่แถวแรก gviz ให้ cols.label ---
+function ingestLabels(json){
+  const cols = json.table.cols.map(c=>c.label);
+  const rows = json.table.rows.map(tr=>{
+    const o={};
+    (tr.c||[]).forEach((cell,i)=>{ const lbl=cols[i]; if(lbl) o[lbl]=gvizCell(cell); });
+    return o;
+  });
+  return rows.map(normalizeRow).filter(r=> (r.node||r.route));
+}
+// --- โหมด so (ชีต Service Order): แถว1=ผลรวม, แถว2=หัวตาราง, แถว3+=ข้อมูล ---
+const soNorm = s => String(s==null?"":s).replace(/\s+/g," ").trim();
+// แมป key -> ดัชนีคอลัมน์ จากหัวตาราง (row2): ใช้ชื่อหัวที่มี + อ้างตำแหน่งจาก VPN/Province สำหรับคอลัมน์ตัวเลขที่ไม่มีหัว
+function soColIdx(header){
+  const find = lbl => header.indexOf(lbl);
+  const node = find("VPN"), prov = find("Province");
+  return {
+    node: node,
+    year: node>0 ? node-1 : -1,            // คอลัมน์ก่อน VPN
+    route: find("ชื่อเส้นทาง"),
+    prov: prov,
+    core: prov>=0 ? prov+1 : -1,           // 4 คอลัมน์ถัดจาก Province
+    diameter: prov>=0 ? prov+2 : -1,
+    km: prov>=0 ? prov+3 : -1,
+    poles: prov>=0 ? prov+4 : -1,
+    zone: find("เขต"), peazone: find("เขตการไฟฟ้า"), no_permit: find("ไม่ขออนุญาต"),
+    nbtc_no: find("เลขที่ NBTC"), nbtc_approve_no: find("เลขที่เห็นชอบ NBTC"),
+    pea_doc_no: find("เลขที่หนังสือออก"), tams_no: find("เลขที่คำร้อง (TAMS)"),
+    status: find("สถานะ PEA,MEA"), permit_doc_no: find("เลขที่หนังสืออนุญาตพาดสาย"),
+    permit_no: find("เลขที่ อนุญาต"), origin: find("ต้นทาง"), dest: find("ปลายทาง"),
+    note: find("หมายเหตุ"), doc_link: find("Link เก็บเอกสาร"), category: find("Category")
+  };
+}
+function ingestSO(json){
+  const all = json.table.rows || [];
+  if(all.length < 3) return [];
+  const header = (all[1].c||[]).map(c=> c && c.v!=null ? soNorm(c.v) : "");
+  const idx = soColIdx(header);
+  const out = [];
+  for(let r=2;r<all.length;r++){
+    const cells = all[r].c||[];
+    const o={};
+    for(const k in idx){ const ci=idx[k]; if(ci>=0 && ci<cells.length) o[k]=gvizCell(cells[ci]); }
+    if(!(o.node||o.route)) continue;
+    // คอลัมน์ปีเป็นชนิด date ในชีต → ดึงเฉพาะปี ค.ศ. 4 หลัก
+    if(o.year!=null && o.year!==""){ const ym=String(o.year).match(/(\d{4})/); if(ym) o.year=Number(ym[1]); }
+    NUM_FIELDS.forEach(k=>{ if(o[k]!=null && o[k]!=="" && !isNaN(o[k])) o[k]=Number(o[k]); });
+    out.push(o);
+  }
+  return out;
+}
+function ingest(json, w){ return w.mode==="so" ? ingestSO(json) : ingestLabels(json); }
+
+// โหลดข้อมูล 1 workspace ผ่าน gviz แบบ JSONP (<script>) — ไม่ติด CORS
+// คืน Promise<rows> และเก็บลง w.cache (ใช้ได้ทั้งหน้าค้นหาและแดชบอร์ด)
+function fetchSheet(w){
+  toast("กำลังโหลดข้อมูลจาก "+w.title+"…");
+  return new Promise(resolve=>{
+    const cb = "__gviz_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
+    const script = document.createElement("script");
+    let done = false;
+    const cleanup = ()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } script.remove(); };
+    const timer = setTimeout(()=>{
+      if(!done){ done=true; toast("โหลด "+w.title+" หมดเวลา (เครือข่าย/สิทธิ์การเข้าถึง)","err"); cleanup(); resolve(w.cache||[]); }
+    }, 30000);
+    window[cb] = json=>{
+      done = true; clearTimeout(timer);
+      let rows = w.cache || [];
+      try{ rows = ingest(json, w); w.cache = rows; }
+      catch(err){ toast("ประมวลผล "+w.title+" ไม่สำเร็จ: "+err.message,"err"); }
+      cleanup(); resolve(rows);
+    };
+    script.onerror = ()=>{
+      if(done) return;
+      done = true; clearTimeout(timer);
+      toast("โหลด "+w.title+" ไม่สำเร็จ (ตรวจการเชื่อมต่อ/สิทธิ์ชีต)","err");
+      cleanup(); resolve(w.cache||[]);
+    };
+    script.src = "https://docs.google.com/spreadsheets/d/"+SHEET_ID
+      +"/gviz/tq?tqx=responseHandler:"+cb+";out:json&sheet="+encodeURIComponent(w.sheet);
+    document.body.appendChild(script);
+  });
+}
+function ensureLoaded(key){ const w=WORKSPACES[key]; return w.cache ? Promise.resolve(w.cache) : fetchSheet(w); }
+
+// โหลด workspace ปัจจุบันแล้วอัปเดตหน้าจอ
+function loadDirect(){
+  const reqWS = WS, w = WORKSPACES[reqWS];
+  return fetchSheet(w).then(rows=>{
+    if(WS===reqWS){   // อัปเดตเฉพาะถ้ายังอยู่ workspace เดิม (กันสลับระหว่างโหลด)
+      DATA = rows;
+      directConnected = true; updateConn();
+      fillSelects(); page=1; apply();
+      if(w.canAdd) suggestNextNode();
+      toast("โหลด "+w.title+" "+rows.length+" รายการสำเร็จ","ok");
+    }
+  });
+}
+async function loadFromSheet(){
+  if(!settings.url){ toast("กรุณาตั้งค่า Web App URL ก่อน","err"); return; }
+  toast("กำลังโหลดข้อมูล...");
+  try{
+    const url = settings.url + (settings.url.includes("?")?"&":"?") + "sheet=" + encodeURIComponent(settings.sheet||"");
+    const res = await fetch(url, {method:"GET", mode:"cors"});
+    const j = await res.json();
+    const rows = Array.isArray(j)? j : (j.data||j.records||[]);
+    DATA = rows.map(normalizeRow);
+    fillSelects(); page=1; apply();
+    toast("โหลดข้อมูล "+DATA.length+" รายการสำเร็จ","ok");
+  }catch(err){
+    toast("โหลดข้อมูลไม่สำเร็จ: "+err.message,"err");
+  }
+}
+// map possible alternate header keys -> our schema (รวมหัวตารางจริงของชีต SN)
+const HEADER_ALIAS = {
+  "Service NODE":"node","ปี":"year","ชื่อเส้นทาง":"route",
+  "Province":"prov","จังหวัด":"prov","ประเภทงาน":"type",
+  "ขนาดสาย Core.":"core","ขนาดสาย Core":"core","Core":"core",
+  "Diameter (mm.)":"diameter","ระยะทาง (km)":"km","ระยะทาง":"km",
+  "จำนวน (ต้น)":"poles","จำนวนเสา":"poles",
+  "จำนวน เสาเขียว":"poles_green","จำนวน เสาแดง":"poles_red","จำนวน เสาเทา":"poles_gray",
+  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone","ไม่ขออนุญาต":"no_permit",
+  "วันที่ออกหนังสือ NBTC":"nbtc_issue_date","เลขที่ NBTC":"nbtc_no",
+  "วันที่อนุญาต NBTC":"nbtc_permit_date","เลขที่อนุญาต NBTC":"nbtc_permit_no",
+  "วันที่ออกหนังสือ PEA/MEA":"pea_issue_date",
+  "เลขที่หนังสือออก/เลขที่เส้นทาง(CCM)":"pea_doc_no",
+  "เลขที่คำร้อง (TAMS)/เลขที่รับเรื่อง(CCM)":"tams_no","เลขที่คำร้อง TAMS":"tams_no",
+  "เลขที่หนังสือค่าดำเนินการก่อน":"fee_doc_no","ลงวันที่(ค่าดำเนินการ)":"fee_date",
+  "สถานะ PEA,MEA":"status","สถานะ PEA/MEA":"status","สถานะ":"status",
+  "วันเริ่มพาดสาย":"start_date","จำนวนวัน":"days",
+  "เลขที่หนังสืออนุญาตพาดสาย":"permit_doc_no","วันที่อนุญาตพาดสาย":"permit_date",
+  "เลขที่ อนุญาต":"permit_no","เลขที่อนุญาต":"permit_no","หมายเหตุ":"note","Link เก็บเอกสาร":"doc_link"
+};
+// ตัดช่องว่าง/ขึ้นบรรทัด/จุด เพื่อจับคู่หัวตารางแบบยืดหยุ่น
+const cleanKey = s => String(s).replace(/\s+/g,"").replace(/\./g,"");
+const ALIAS_CLEAN = {};
+for(const k in HEADER_ALIAS){ ALIAS_CLEAN[cleanKey(k)] = HEADER_ALIAS[k]; }
+const NUM_FIELDS = ["year","core","km","diameter","poles","poles_green","poles_red","poles_gray","days"];
+
+function normalizeRow(o){
+  const r={};
+  for(const label in o){
+    const key = ALIAS_CLEAN[cleanKey(label)] || label;
+    if(r[key]==null || r[key]==="") r[key]=o[label];
+  }
+  NUM_FIELDS.forEach(k=>{
+    if(r[k]!=null && r[k]!=="" && !isNaN(r[k])) r[k]=Number(r[k]);
+  });
+  return r;
+}
+
+// ---------- Settings ----------
+let directConnected = false;
+function updateConn(){
+  const on = directConnected || !!settings.url;
+  $("connDot").className = "dot"+(on?" on":"");
+  $("connTxt").textContent = on
+    ? (settings.url ? "เชื่อมต่อแล้ว (อ่าน+เขียน)" : "เชื่อมต่อแล้ว (อ่านอย่างเดียว)")
+    : "ยังไม่เชื่อมต่อ";
+}
+const SETTINGS_KEY = "itel_pole_settings";
+function saveSettings(){
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){}
+}
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if(raw){ const s = JSON.parse(raw); settings.url = s.url||""; settings.sheet = s.sheet||"SN"; }
+  }catch(e){}
+  $("set_url").value = settings.url || "";
+  $("set_sheet").value = settings.sheet || "SN";
+}
+$("saveSetBtn").onclick=()=>{
+  settings.url=$("set_url").value.trim();
+  settings.sheet=$("set_sheet").value.trim()||"SN";
+  saveSettings();
+  updateConn();
+  toast(settings.url?"บันทึกการตั้งค่าแล้ว (จำค่าไว้แล้ว)":"บันทึกแล้ว (ไม่มี URL → ใช้ memory)","ok");
+};
+$("testBtn").onclick=async()=>{
+  const u=$("set_url").value.trim();
+  if(!u){ toast("กรุณากรอก Web App URL","err"); return; }
+  toast("กำลังทดสอบ...");
+  try{
+    const res=await fetch(u+(u.includes("?")?"&":"?")+"ping=1",{method:"GET",mode:"cors"});
+    await res.text();
+    toast("เชื่อมต่อสำเร็จ ✓","ok");
+  }catch(err){ toast("เชื่อมต่อไม่สำเร็จ: "+err.message,"err"); }
+};
+$("loadBtn").onclick=loadDirect;
+$("loadBtn2").onclick=loadDirect;
+
+// ---------- Apps Script code ----------
+const APPS_SCRIPT = `// ===== ITEL Pole-Attachment — Google Apps Script Web App =====
+// หัวตาราง (row 1) ของชีต SN เป็นภาษาไทย โค้ดนี้แมปคีย์อังกฤษจากฟอร์ม
+// (node, year, ...) -> หัวคอลัมน์ไทยให้อัตโนมัติ ข้อมูลจึงลงตรงช่อง
+
+var SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
+var DEFAULT_SHEET = "SN";
+
+var HEADER_ALIAS = {
+  "Service NODE":"node","ปี":"year","ชื่อเส้นทาง":"route",
+  "Province":"prov","จังหวัด":"prov","ประเภทงาน":"type",
+  "ขนาดสาย Core.":"core","ขนาดสาย Core":"core","Core":"core",
+  "Diameter (mm.)":"diameter","ระยะทาง (km)":"km","ระยะทาง":"km",
+  "จำนวน (ต้น)":"poles","จำนวนเสา":"poles",
+  "จำนวน เสาเขียว":"poles_green","จำนวน เสาแดง":"poles_red","จำนวน เสาเทา":"poles_gray",
+  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone","ไม่ขออนุญาต":"no_permit",
+  "วันที่ออกหนังสือ NBTC":"nbtc_issue_date","เลขที่ NBTC":"nbtc_no",
+  "วันที่อนุญาต NBTC":"nbtc_permit_date","เลขที่อนุญาต NBTC":"nbtc_permit_no",
+  "วันที่ออกหนังสือ PEA/MEA":"pea_issue_date",
+  "เลขที่หนังสือออก/เลขที่เส้นทาง(CCM)":"pea_doc_no",
+  "เลขที่คำร้อง (TAMS)/เลขที่รับเรื่อง(CCM)":"tams_no","เลขที่คำร้อง TAMS":"tams_no",
+  "เลขที่หนังสือค่าดำเนินการก่อน":"fee_doc_no","ลงวันที่(ค่าดำเนินการ)":"fee_date",
+  "สถานะ PEA,MEA":"status","สถานะ PEA/MEA":"status","สถานะ":"status",
+  "วันเริ่มพาดสาย":"start_date","จำนวนวัน":"days",
+  "เลขที่หนังสืออนุญาตพาดสาย":"permit_doc_no","วันที่อนุญาตพาดสาย":"permit_date",
+  "เลขที่ อนุญาต":"permit_no","เลขที่อนุญาต":"permit_no","หมายเหตุ":"note","Link เก็บเอกสาร":"doc_link"
+};
+function cleanKey_(s){ return String(s).replace(/\\s+/g,"").replace(/\\./g,""); }
+var ALIAS_CLEAN = (function(){ var m={}; for(var k in HEADER_ALIAS){ m[cleanKey_(k)]=HEADER_ALIAS[k]; } return m; })();
+function headerToKey_(label){ return ALIAS_CLEAN[cleanKey_(label)] || label; }
+
+function getSheet_(name){
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(name || DEFAULT_SHEET);
+  return sh || ss.getSheets()[0];
+}
+
+function doGet(e){
+  try{
+    if(e && e.parameter && e.parameter.ping){
+      return json_({ok:true, msg:"pong"});
+    }
+    var sh = getSheet_(e && e.parameter ? e.parameter.sheet : "");
+    var values = sh.getDataRange().getValues();
+    if(values.length < 2) return json_([]);
+    var head = values[0];
+    var out = [];
+    for(var i=1;i<values.length;i++){
+      if(values[i].join("")==="") continue;
+      var row = {};
+      for(var j=0;j<head.length;j++){ row[headerToKey_(head[j])] = values[i][j]; }
+      out.push(row);
+    }
+    return json_(out);
+  }catch(err){ return json_({ok:false, error:String(err)}); }
+}
+
+function doPost(e){
+  try{
+    var body = JSON.parse(e.postData.contents);
+    var sh = getSheet_(body.sheet);
+    var rec = body.record || {};
+    if(body.action === "update"){ return (body.mode==="so") ? updateRowSO_(sh, rec) : updateRow_(sh, rec, body.key || "node"); }
+    var head = sh.getDataRange().getValues()[0];
+    if(!head || head.length === 0 || (head.length===1 && head[0]==="")){
+      head = Object.keys(rec);
+      sh.appendRow(head);
+    }
+    var prevRow = sh.getLastRow();
+    var row = head.map(function(h){
+      var v = rec[headerToKey_(h)];
+      return v != null ? toDate_(v) : "";
+    });
+    sh.appendRow(row);
+    var newRow = sh.getLastRow();
+    if(prevRow >= 1){
+      for(var c=0;c<row.length;c++){
+        if(row[c] instanceof Date){ sh.getRange(newRow, c+1).setNumberFormat(sh.getRange(prevRow, c+1).getNumberFormat()); }
+      }
+    }
+    return json_({ok:true, appended:row.length});
+  }catch(err){ return json_({ok:false, error:String(err)}); }
+}
+
+// แก้ไขแถวตามค่า key (เช่น node) อัปเดตเฉพาะคอลัมน์ที่ส่งมา
+function updateRow_(sh, rec, keyField){
+  var values = sh.getDataRange().getValues();
+  var head = values[0];
+  var keyCol = -1;
+  for(var c=0;c<head.length;c++){ if(headerToKey_(head[c])===keyField){ keyCol=c; break; } }
+  if(keyCol<0) return json_({ok:false, error:"ไม่พบคอลัมน์ key: "+keyField});
+  var target = String(rec[keyField]);
+  for(var r=1;r<values.length;r++){
+    if(String(values[r][keyCol])===target){
+      for(var cc=0;cc<head.length;cc++){
+        var key = headerToKey_(head[cc]);
+        if(rec.hasOwnProperty(key)){ sh.getRange(r+1, cc+1).setValue(rec[key]!=null?toDate_(rec[key]):""); }
+      }
+      return json_({ok:true, updated:r+1});
+    }
+  }
+  return json_({ok:false, error:"ไม่พบแถวที่ "+keyField+" = "+target});
+}
+
+// Service Order: หัวตารางแถว 2, คอลัมน์ตัวเลขไม่มีหัว (อ้างตำแหน่งจาก VPN/Province)
+function soColMap_(header){
+  function find(l){ return header.indexOf(l); }
+  var node=find("VPN"), prov=find("Province");
+  return {
+    node:node, year:node>0?node-1:-1, route:find("ชื่อเส้นทาง"), prov:prov,
+    core:prov>=0?prov+1:-1, diameter:prov>=0?prov+2:-1, km:prov>=0?prov+3:-1, poles:prov>=0?prov+4:-1,
+    zone:find("เขต"), peazone:find("เขตการไฟฟ้า"), no_permit:find("ไม่ขออนุญาต"),
+    nbtc_no:find("เลขที่ NBTC"), nbtc_approve_no:find("เลขที่เห็นชอบ NBTC"),
+    pea_doc_no:find("เลขที่หนังสือออก"), tams_no:find("เลขที่คำร้อง (TAMS)"),
+    status:find("สถานะ PEA,MEA"), permit_doc_no:find("เลขที่หนังสืออนุญาตพาดสาย"),
+    permit_no:find("เลขที่ อนุญาต"), origin:find("ต้นทาง"), dest:find("ปลายทาง"),
+    note:find("หมายเหตุ"), doc_link:find("Link เก็บเอกสาร")
+  };
+}
+function updateRowSO_(sh, rec){
+  var values = sh.getDataRange().getValues();
+  if(values.length < 3) return json_({ok:false, error:"ชีต Service Order ไม่มีข้อมูล"});
+  var header = values[1].map(function(v){ return v==null?"":String(v).replace(/\\s+/g," ").trim(); });
+  var map = soColMap_(header);
+  var keyCol = map.node;
+  if(keyCol==null || keyCol<0) return json_({ok:false, error:"ไม่พบคอลัมน์ VPN"});
+  var target = String(rec.node);
+  for(var r=2;r<values.length;r++){
+    if(String(values[r][keyCol])===target){
+      for(var k in map){
+        var col=map[k];
+        if(col>=0 && rec.hasOwnProperty(k)){ sh.getRange(r+1, col+1).setValue(rec[k]!=null?toDate_(rec[k]):""); }
+      }
+      return json_({ok:true, updated:r+1, mode:"so"});
+    }
+  }
+  return json_({ok:false, error:"ไม่พบแถว VPN = "+target});
+}
+
+// แปลงสตริงวันที่ ISO "yyyy-mm-dd" → Date จริง (เพื่อให้ชีตแสดงเป็นวันที่ไทย เช่น "12 มิ.ย. 26")
+function toDate_(v){
+  if(typeof v === "string"){
+    var m = v.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  }
+  return v;
+}
+
+function json_(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+$("codeBox").textContent = APPS_SCRIPT;
+$("copyCode").onclick=()=>{
+  navigator.clipboard.writeText(APPS_SCRIPT).then(()=>toast("คัดลอกโค้ดแล้ว","ok"),
+    ()=>{ const r=document.createRange(); r.selectNode($("codeBox")); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); toast("คัดลอกโค้ดแล้ว","ok"); });
+};
+
+// ---------- Sample data ----------
+const SAMPLE = [
+  {node:"BKK-01",year:2568,route:"ถนนสุขุมวิท ช่วงอโศก-ทองหล่อ",prov:"กรุงเทพมหานคร",type:"ขยายเครือข่าย",core:48,km:2.45,poles:62,poles_green:40,poles_red:12,poles_gray:10,zone:"กลาง",peazone:"กฟน. เขต 1",status:"อนุญาต",diameter:13.5,nbtc_no:"NBTC-2568-0012",nbtc_permit_no:"AP-0012",pea_doc_no:"MEA-557/68",tams_no:"TAMS-88231",fee_doc_no:"FEE-221",start_date:"2025-03-10",days:30,permit_doc_no:"PM-7781",permit_no:"PA-0091",note:"พาดสายเสร็จตามแผน"},
+  {node:"CNX-04",year:2567,route:"สายเชียงใหม่-สันทราย",prov:"เชียงใหม่",type:"Existing",core:24,km:8.12,poles:210,poles_green:150,poles_red:40,poles_gray:20,zone:"เหนือ",peazone:"กฟภ. เขต 1 (เชียงใหม่)",status:"อยู่ระหว่างดำเนินการ",diameter:11,nbtc_no:"NBTC-2567-0455",tams_no:"TAMS-77120",note:""},
+  {node:"KKN-02",year:2568,route:"ขอนแก่น-บ้านไผ่",prov:"ขอนแก่น",type:"จัดระเบียบสาย",core:12,km:15.6,poles:380,poles_green:300,poles_red:50,poles_gray:30,zone:"ตะวันออกเฉียงเหนือ",peazone:"กฟภ. เขต 1 (อุดรธานี)",status:"รอดำเนินการ",diameter:9.5,nbtc_no:"NBTC-2568-0099",tams_no:"TAMS-90011"},
+  {node:"HDY-03",year:2566,route:"หาดใหญ่-สงขลา เลียบชายฝั่ง",prov:"สงขลา",type:"ทดแทน",core:96,km:5.3,poles:128,poles_green:90,poles_red:25,poles_gray:13,zone:"ใต้",peazone:"กฟภ. เขต 3 (ยะลา)",status:"ไม่อนุญาต",diameter:16,nbtc_no:"NBTC-2566-0301",tams_no:"TAMS-66540",note:"ติดเขตอนุรักษ์ ต้องยื่นใหม่"},
+  {node:"NMA-07",year:2568,route:"นครราชสีมา-ปากช่อง",prov:"นครราชสีมา",type:"ขยายเครือข่าย",core:144,km:42.8,poles:1050,poles_green:800,poles_red:150,poles_gray:100,zone:"ตะวันออกเฉียงเหนือ",peazone:"กฟภ. เขต 3 (นครราชสีมา)",status:"อนุญาต",diameter:18,nbtc_no:"NBTC-2568-0500",nbtc_permit_no:"AP-0500",pea_doc_no:"PEA-1290/68",tams_no:"TAMS-91122",start_date:"2025-05-01",days:90,permit_no:"PA-0500",note:""},
+  {node:"BKK-09",year:2567,route:"พระราม 2 ช่วงดาวคะนอง",prov:"กรุงเทพมหานคร",type:"จัดระเบียบสาย",core:60,km:3.9,poles:95,poles_green:70,poles_red:15,poles_gray:10,zone:"กลาง",peazone:"กฟน. เขต 2",status:"อนุญาต",diameter:14,tams_no:"TAMS-70233",permit_no:"PA-0233"},
+  {node:"PKT-01",year:2568,route:"ภูเก็ต-ป่าตอง",prov:"ภูเก็ต",type:"Existing",core:8,km:6.7,poles:160,poles_green:120,poles_red:25,poles_gray:15,zone:"ใต้",peazone:"กฟภ. เขต 2 (นครศรีธรรมราช)",status:"อยู่ระหว่างดำเนินการ",diameter:8,tams_no:"TAMS-92001"},
+  {node:"CRI-05",year:2566,route:"เชียงราย-แม่จัน",prov:"เชียงราย",type:"ทดแทน",core:216,km:22.1,poles:540,poles_green:400,poles_red:90,poles_gray:50,zone:"เหนือ",peazone:"กฟภ. เขต 1 (เชียงใหม่)",status:"รอดำเนินการ",diameter:20,tams_no:"TAMS-64412"},
+];
+$("seedBtn").onclick=()=>{ DATA = SAMPLE.map(r=>({...r})); fillSelects(); page=1; apply(); toast("โหลดข้อมูลตัวอย่าง "+DATA.length+" รายการ","ok"); };
+
+// ---------- Dashboard ----------
+const isApproved = s => s==="อนุญาต" || s==="อนุุญาต";   // รวม typo
+// แปลงปี พ.ศ.→ค.ศ. (ถ้า >=2400) คืน null ถ้าไม่สมเหตุผล
+function normYear(y){ y=parseInt(y); if(isNaN(y)) return null; if(y>=2400 && y<3000) y-=543; return (y>=2000 && y<=2100) ? y : null; }
+function statOf(rows){
+  let approved=0, pending=0, km=0;
+  rows.forEach(r=>{
+    const s = (r.status==null?"":String(r.status).trim());
+    if(isApproved(s)) approved++;
+    else if(s==="" || s==="-") pending++;       // ยังไม่ระบุผล = อยู่ระหว่างดำเนินการ
+    km += parseFloat(r.km)||0;
+  });
+  return { total: rows.length, approved, pending, km };
+}
+function byYear(rows){
+  const m={};
+  rows.forEach(r=>{ const y=normYear(r.year); if(y!=null) m[y]=(m[y]||0)+1; });
+  return m;
+}
+function statusColor(s){
+  return ({"อนุญาต":"var(--green)","รอดำเนินการ":"var(--yellow)","ไม่อนุญาต":"var(--red)","อยู่ระหว่างดำเนินการ":"var(--blue)"})[s] || "var(--accent)";
+}
+const fmtN = n => Number(n).toLocaleString();
+const fmtK = n => Number(n).toLocaleString(undefined,{maximumFractionDigits:1});
+
+async function openDashboard(){
+  $("dashCards").innerHTML = '<div class="dash-empty">⏳ กำลังโหลดข้อมูล SN + Service Order…</div>';
+  await Promise.all([ensureLoaded("sn"), ensureLoaded("so")]);
+  renderDashboard();
+}
+function renderDashboard(){
+  const sn = WORKSPACES.sn.cache||[], so = WORKSPACES.so.cache||[];
+  const a = statOf(sn), b = statOf(so);
+  const card=(v,l,sub,cls)=>`<div class="dcard ${cls||''}"><div class="dv">${v}</div><div class="dl">${l}</div>${sub?`<div class="ds">${sub}</div>`:''}</div>`;
+  $("dashCards").innerHTML = `<div class="dash-cards">
+    ${card(fmtN(a.total),"SN ทั้งหมด","อนุญาต "+fmtN(a.approved)+" • รอดำเนินการ "+fmtN(a.pending),"blue")}
+    ${card(fmtN(b.total),"Service Order ทั้งหมด","อนุญาต "+fmtN(b.approved)+" • รอดำเนินการ "+fmtN(b.pending),"green")}
+    ${card(fmtN(a.total+b.total),"รวมทั้งหมด (SN + SO)","")}
+    ${card(fmtN(a.approved+b.approved),"อนุญาตแล้ว (รวม)","SN "+fmtN(a.approved)+" • SO "+fmtN(b.approved),"green")}
+    ${card(fmtN(a.pending+b.pending),"รอ/ระหว่างดำเนินการ (ยังไม่ระบุผล)","SN "+fmtN(a.pending)+" • SO "+fmtN(b.pending),"yellow")}
+    ${card(fmtK(a.km+b.km),"ระยะทางรวม (km)","SN "+fmtK(a.km)+" • SO "+fmtK(b.km),"")}
+  </div>`;
+  renderYearChart(sn, so);
+  renderStatusChart(sn.concat(so));
+  setupMonthly(sn);
+}
+function renderYearChart(sn, so){
+  const ySN=byYear(sn), ySO=byYear(so);
+  const years=[...new Set([...Object.keys(ySN),...Object.keys(ySO)])].map(Number).sort((x,y)=>x-y);
+  if(!years.length){ $("dashYear").innerHTML='<div class="dash-empty">ไม่มีข้อมูลปี</div>'; return; }
+  const max=Math.max(1,...years.map(y=>Math.max(ySN[y]||0,ySO[y]||0)));
+  $("dashYear").innerHTML = `<div class="vbars">`+years.map(y=>{
+    const va=ySN[y]||0, vb=ySO[y]||0;
+    return `<div class="vcol"><div class="vgroup">
+      <div class="vbar sn" style="height:${(va/max*100).toFixed(1)}%" title="SN ${y}: ${fmtN(va)}"></div>
+      <div class="vbar so" style="height:${(vb/max*100).toFixed(1)}%" title="Service Order ${y}: ${fmtN(vb)}"></div>
+    </div><div class="vlbl">${y}</div></div>`;
+  }).join("")+`</div>`;
+}
+function renderStatusChart(rows){
+  const m={};
+  rows.forEach(r=>{ const s=(r.status==null||r.status==="")?"(ไม่ระบุ)":String(r.status); m[s]=(m[s]||0)+1; });
+  const arr=Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,8);
+  if(!arr.length){ $("dashStatus").innerHTML='<div class="dash-empty">ไม่มีข้อมูล</div>'; return; }
+  const max=Math.max(1,...arr.map(e=>e[1]));
+  $("dashStatus").innerHTML=`<div class="hbars">`+arr.map(([s,c])=>`
+    <div class="hrow"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s)}">${esc(s)}</div>
+    <div class="htrack"><div class="hfill" style="width:${(c/max*100).toFixed(1)}%;background:${statusColor(s)}"></div></div>
+    <div class="hval">${fmtN(c)}</div></div>`).join("")+`</div>`;
+}
+// แยกปี(ค.ศ.)+เดือน จากวันที่ ISO โดยแปลง พ.ศ.→ค.ศ. และกรองปีเพี้ยน
+function dymonth(d){
+  const m=String(d).match(/^(\d{4})-(\d{2})/); if(!m) return null;
+  const y=normYear(m[1]); if(y==null) return null;
+  return { y, mo:+m[2] };
+}
+function setupMonthly(sn){
+  const ys=new Set();
+  sn.forEach(r=>{ const dm=dymonth(r.nbtc_issue_date||r.pea_issue_date||""); if(dm) ys.add(dm.y); });
+  const years=[...ys].sort((x,y)=>y-x);
+  const sel=$("dashMonthYear");
+  const cur = (sel.value && years.includes(+sel.value)) ? +sel.value : (years[0]||new Date().getFullYear());
+  sel.innerHTML = years.length ? years.map(y=>`<option ${y===cur?'selected':''}>${y}</option>`).join("") : `<option>${new Date().getFullYear()}</option>`;
+  sel.onchange=()=>renderMonthly(sn, +sel.value);
+  renderMonthly(sn, cur);
+}
+function renderMonthly(sn, year){
+  const counts=new Array(12).fill(0);
+  sn.forEach(r=>{ const dm=dymonth(r.nbtc_issue_date||r.pea_issue_date||""); if(dm&&dm.y===year) counts[dm.mo-1]++; });
+  const max=Math.max(1,...counts);
+  const mon=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  $("dashMonthly").innerHTML=`<div class="vbars">`+counts.map((c,i)=>
+    `<div class="vcol"><div class="vgroup"><div class="vbar sn" style="height:${(c/max*100).toFixed(1)}%" title="${mon[i]} ${year}: ${c}">${c?`<span class="bval">${c}</span>`:''}</div></div><div class="vlbl">${mon[i]}</div></div>`
+  ).join("")+`</div>`;
+}
+$("dashRefresh").onclick=async()=>{
+  WORKSPACES.sn.cache=null; WORKSPACES.so.cache=null;
+  await openDashboard();
+  DATA = WORKSPACES[WS].cache || []; fillSelects(); apply();   // sync หน้าค้นหาด้วย
+};
+
+// ---------- Init ----------
+loadSettings();                 // คืนค่า URL/ชีต ที่บันทึกไว้ (localStorage)
+renderFilterPanel();            // สร้างตัวกรองของ workspace ปัจจุบัน (SN)
+buildHead(); fillSelects(); updateConn(); apply();
+// เชื่อมตรง + โหลดข้อมูลจาก workspace ปัจจุบันอัตโนมัติเมื่อเปิดแอป
+loadDirect();
+</script>
+<script>
+(function(){
+  var titles={search:"ค้นหา / กรองข้อมูล",dashboard:"แดชบอร์ด",entry:"กรอกข้อมูลใหม่",settings:"ตั้งค่าระบบ"};
+  var subs={search:"สืบค้นและกรองรายการขออนุญาตพาดสาย",dashboard:"ภาพรวมสถานะงานทั้งหมด",entry:"เพิ่มรายการขออนุญาตใหม่เข้าสู่ระบบ",settings:"การเชื่อมต่อ Google Sheets และ Apps Script"};
+  function upd(tab){var t=document.getElementById("pageTitle"),s=document.getElementById("pageSub");if(t&&titles[tab])t.textContent=titles[tab];if(s&&subs[tab])s.textContent=subs[tab];}
+  document.querySelectorAll(".nav-item").forEach(function(b){b.addEventListener("click",function(){upd(b.dataset.tab);});});
+})();
+</script>
+</body>
+</html>
