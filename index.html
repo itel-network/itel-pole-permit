@@ -544,6 +544,7 @@ const SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
 // ========== Google Sign-In (บันทึกว่าใครเป็นผู้กรอก/แก้ไข) ==========
 const GOOGLE_CLIENT_ID = "904839558573-0rq8hunomu07ijtebmb65sdgubhgm9l4.apps.googleusercontent.com";
 let authUser = null;                 // {email, name, picture}
+let authToken = null;                // Google ID token (ส่งให้ Apps Script ตรวจสิทธิ์ฝั่งเซิร์ฟเวอร์)
 let pendingAfterLogin = null;        // ฟังก์ชันที่จะทำต่อหลังล็อกอินสำเร็จ
 const AUTH_KEY = "itel_auth_user";
 function loadAuth(){ try{ const r=localStorage.getItem(AUTH_KEY); if(r) authUser=JSON.parse(r); }catch(e){} }
@@ -556,6 +557,7 @@ function onGoogleCredential(resp){
   const p = decodeJwt(resp.credential);
   if(!p.email){ toast("เข้าสู่ระบบไม่สำเร็จ","err"); return; }
   authUser = { email:p.email, name:p.name||p.email, picture:p.picture||"" };
+  authToken = resp.credential;
   saveAuth(); renderAuthUI(); hideGate();
   document.getElementById("authModal").classList.remove("show");
   toast("เข้าสู่ระบบ: "+authUser.email, "ok");
@@ -593,7 +595,7 @@ function renderAuthUI(){
   }
 }
 function signOut(){
-  authUser=null; saveAuth(); renderAuthUI();
+  authUser=null; authToken=null; saveAuth(); renderAuthUI();
   try{ google.accounts.id.disableAutoSelect(); }catch(e){}
   toast("ออกจากระบบแล้ว","ok");
   showGate();
@@ -994,7 +996,10 @@ function saveEdit(){
   if(settings.url){
     updateToSheet(rec)
       .then(()=>toast("บันทึกการแก้ไขไป Google Sheets แล้ว","ok"))
-      .catch(err=>toast("แก้ใน memory แล้ว แต่ส่งไป Sheets ไม่สำเร็จ: "+err.message,"err"));
+      .catch(err=>{
+        if(err.authError){ toast(err.message||"ไม่มีสิทธิ์แก้ไข","err"); if(err.needLogin){ authUser=null; authToken=null; renderAuthUI(); showGate(); } }
+        else toast("ส่งไป Sheets ไม่สำเร็จ: "+err.message,"err");
+      });
   } else {
     toast("แก้ไขแล้ว (memory — ตั้งค่า URL เพื่อบันทึกถาวร)","ok");
   }
@@ -1005,10 +1010,10 @@ async function updateToSheet(rec){
   const res = await fetch(settings.url, {
     method:"POST", mode:"cors",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body: JSON.stringify({action:"update", sheet:w.sheet, mode:w.mode, key:"node", record:rec, user:(authUser?authUser.email:"")})
+    body: JSON.stringify({action:"update", sheet:w.sheet, mode:w.mode, key:"node", record:rec, user:(authUser?authUser.email:""), token:authToken})
   });
   const j = await res.json();
-  if(!j || j.ok===false) throw new Error(j && j.error || "update failed");
+  if(!j || j.ok===false) throw writeError_(j, "update failed");
   return j;
 }
 $("mEdit").onclick=()=>{ modalEdit=true; renderModalBody(); };
@@ -1107,20 +1112,21 @@ $("entryForm").addEventListener("submit", async e=>{
   rec._ts = new Date().toISOString();
   const savedNode = rec.node || "";
 
-  let ok=false, viaSheet=false;
+  let saved=false, viaSheet=false;
   if(settings.url){
-    try{ await postToSheet(rec); ok=true; viaSheet=true; }
-    catch(err){ DATA.unshift(rec); toast("ส่งไป Sheets ไม่สำเร็จ — บันทึกใน memory แทน","err"); }
+    try{ await postToSheet(rec); saved=true; viaSheet=true; }
+    catch(err){
+      if(err.authError){ toast(err.message||"ไม่มีสิทธิ์บันทึก","err"); if(err.needLogin){ authUser=null; authToken=null; renderAuthUI(); showGate(); } }
+      else { DATA.unshift(rec); saved=true; toast("ส่งไป Sheets ไม่สำเร็จ — เก็บใน memory แทน","err"); }
+    }
   } else {
-    DATA.unshift(rec); ok=true;
+    DATA.unshift(rec); saved=true;
   }
-  fillSelects(); page=1; apply();
-  e.target.reset();
-  document.querySelector('.tab[data-tab="search"]').click();
-  if(ok){
-    toast(viaSheet
-      ? "✓ บันทึก "+savedNode+" ลง Google Sheets สำเร็จ"
-      : "✓ บันทึก "+savedNode+" สำเร็จ (memory — ยังไม่ตั้งค่า URL)", "ok");
+  if(saved){   // สำเร็จเท่านั้นถึงล้างฟอร์ม/สลับแท็บ (authError จะคงข้อมูลในฟอร์มไว้)
+    fillSelects(); page=1; apply();
+    e.target.reset();
+    document.querySelector('.tab[data-tab="search"]').click();
+    if(viaSheet) toast("✓ บันทึก "+savedNode+" ลง Google Sheets สำเร็จ","ok");
   }
 });
 // กดปุ่ม "ล้างฟอร์ม" แล้วเติมเลข Service NODE ถัดไปกลับให้
@@ -1131,12 +1137,19 @@ async function postToSheet(rec){
   const res = await fetch(settings.url, {
     method:"POST", mode:"cors",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body: JSON.stringify({action:"add", sheet:settings.sheet, record:rec, user:(authUser?authUser.email:"")})
+    body: JSON.stringify({action:"add", sheet:settings.sheet, record:rec, user:(authUser?authUser.email:""), token:authToken})
   });
   const j = await res.json();
-  if(!j || j.ok===false) throw new Error(j && j.error || "post failed");
+  if(!j || j.ok===false) throw writeError_(j, "post failed");
   DATA.unshift(rec);
   return j;
+}
+// สร้าง Error พร้อมธง authError/needLogin จาก response
+function writeError_(j, fallback){
+  const e = new Error((j && j.error) || fallback);
+  e.authError = !!(j && j.authError);
+  e.needLogin = e.authError && /หมดอายุ|เข้าสู่ระบบ|ยังไม่ได้/.test((j && j.error) || "");
+  return e;
 }
 // แปลงค่า cell จาก gviz: Date(y,m,d) → ISO yyyy-mm-dd, อื่นๆ คืนค่า v
 function gvizCell(cell){
@@ -1351,6 +1364,66 @@ const APPS_SCRIPT = `// ===== ITEL Pole-Attachment — Google Apps Script Web Ap
 var SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
 var DEFAULT_SHEET = "SN";
 
+// ===== สิทธิ์การเขียน: เฉพาะอีเมลในทีม (ตรวจ Google ID token ฝั่งเซิร์ฟเวอร์) =====
+var GOOGLE_CLIENT_ID = "904839558573-0rq8hunomu07ijtebmb65sdgubhgm9l4.apps.googleusercontent.com";
+// >>> ใส่อีเมลทีมที่อนุญาตให้บันทึก/แก้ไข (ตัวพิมพ์เล็ก) <<<
+var ALLOWED_EMAILS = [
+  "permission.interlink@gmail.com",
+  "narinete8@gmail.com",
+  "atipat63@gmail.com",
+  "suwat.suansong@gmail.com",
+  "thonsee6@gmail.com",
+  "po.dudee@gmail.com",
+  "c.suphote@gmail.com",
+  "maxgaman22@gmail.com",
+  "noppoldeenok@gmail.com",
+  "komettelecom@gmail.com",
+  "demonlnt2@gmail.com",
+  "pankhongwiroj@gmail.com",
+  "pasit.neung@gmail.com",
+  "itel.supanut@gmail.com",
+  "kritsada.promt@gmail.com",
+  "heroperper@gmail.com",
+  "songsit682@gmail.com",
+  "freshshina2236@gmail.com",
+  "valzione@gmail.com",
+  "na.shanapong@gmail.com",
+  "poor.adiphat010@gmail.com",
+  "amnard2543@gmail.com"
+];
+var ALLOWED_SHEET = "Allowed";   // แท็บชีตเก็บรายชื่ออีเมล (คอลัมน์ A) — แก้ในชีตได้เลย
+function getAllowedEmails_(){
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get("allowed_emails");
+  if(cached) return JSON.parse(cached);
+  var emails = [];
+  try{
+    var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(ALLOWED_SHEET);
+    if(sh && sh.getLastRow()>0){
+      var vals = sh.getRange(1,1,sh.getLastRow(),1).getValues();
+      for(var i=0;i<vals.length;i++){
+        var em = String(vals[i][0]||"").trim().toLowerCase();
+        if(em && em.indexOf("@")>0) emails.push(em);
+      }
+    }
+  }catch(e){}
+  if(!emails.length) emails = ALLOWED_EMAILS.map(function(x){return x.toLowerCase();});
+  cache.put("allowed_emails", JSON.stringify(emails), 120);
+  return emails;
+}
+function verifyUser_(token){
+  if(!token) return {ok:false, error:"ยังไม่ได้เข้าสู่ระบบ"};
+  try{
+    var r = UrlFetchApp.fetch("https://oauth2.googleapis.com/tokeninfo?id_token="+encodeURIComponent(token), {muteHttpExceptions:true});
+    if(r.getResponseCode()!==200) return {ok:false, error:"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"};
+    var info = JSON.parse(r.getContentText());
+    if(String(info.aud)!==GOOGLE_CLIENT_ID) return {ok:false, error:"token ไม่ตรงกับแอป"};
+    var email = String(info.email||"").toLowerCase();
+    if(getAllowedEmails_().indexOf(email)<0) return {ok:false, error:"อีเมลนี้ไม่มีสิทธิ์บันทึก: "+(info.email||"")};
+    return {ok:true, email:info.email};
+  }catch(err){ return {ok:false, error:"ตรวจสอบสิทธิ์ไม่สำเร็จ: "+err}; }
+}
+
 var HEADER_ALIAS = {
   "Service NODE":"node","ปี":"year","ชื่อเส้นทาง":"route",
   "Province":"prov","จังหวัด":"prov","ประเภทงาน":"type",
@@ -1403,9 +1476,11 @@ function doGet(e){
 function doPost(e){
   try{
     var body = JSON.parse(e.postData.contents);
+    var auth = verifyUser_(body.token);   // ตรวจสิทธิ์ก่อนเขียน — เฉพาะอีเมลในทีม
+    if(!auth.ok) return json_({ok:false, authError:true, error:auth.error});
     var sh = getSheet_(body.sheet);
     var rec = body.record || {};
-    var who = String(body.user || "");
+    var who = auth.email;                 // อีเมลที่ตรวจสอบจริง (ปลอมไม่ได้)
     if(body.action === "update"){ return (body.mode==="so") ? updateRowSO_(sh, rec, who) : updateRow_(sh, rec, body.key || "node", who); }
     var head = sh.getDataRange().getValues()[0];
     if(!head || head.length === 0 || (head.length===1 && head[0]==="")){
