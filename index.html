@@ -256,6 +256,15 @@ tbody tr:hover{background:var(--brand-soft)}
 .auth-pop h3{font-size:18px;color:var(--ink);margin-bottom:8px}
 .auth-pop p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
 .auth-pop #gbtn{display:flex;justify-content:center;min-height:44px}
+/* Login gate (full screen) */
+.gate{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#2a231c 0%,#171109 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+.gate.hide{display:none}
+.gate-card{background:var(--card);border-radius:20px;max-width:410px;width:100%;padding:42px 34px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.6)}
+.gate-logo{width:62px;height:62px;border-radius:15px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:25px;letter-spacing:-1px;margin:0 auto 20px;box-shadow:0 8px 20px -6px rgba(232,106,28,.5)}
+.gate-card h2{font-size:18px;color:var(--ink);margin-bottom:10px;line-height:1.35}
+.gate-card p{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.6}
+.gate-card #gateBtn{display:flex;justify-content:center;min-height:44px}
+.gate-hint{margin-top:18px;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -494,6 +503,17 @@ tbody tr:hover{background:var(--brand-soft)}
   </div>
 </div>
 
+<!-- Login gate (เต็มจอ — บังคับล็อกอินก่อนใช้งาน) -->
+<div class="gate" id="authGate">
+  <div class="gate-card">
+    <div class="gate-logo">IT</div>
+    <h2>ITEL — ระบบจัดการงานขออนุญาตพาดสาย</h2>
+    <p>กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเข้าใช้งาน<br>ระบบจะบันทึกว่าใครเป็นผู้กรอก/แก้ไขข้อมูล</p>
+    <div id="gateBtn"></div>
+    <div class="gate-hint" id="gateHint"></div>
+  </div>
+</div>
+
 <!-- Login modal -->
 <div class="auth-bg" id="authModal">
   <div class="auth-pop">
@@ -534,7 +554,7 @@ function onGoogleCredential(resp){
   const p = decodeJwt(resp.credential);
   if(!p.email){ toast("เข้าสู่ระบบไม่สำเร็จ","err"); return; }
   authUser = { email:p.email, name:p.name||p.email, picture:p.picture||"" };
-  saveAuth(); renderAuthUI();
+  saveAuth(); renderAuthUI(); hideGate();
   document.getElementById("authModal").classList.remove("show");
   toast("เข้าสู่ระบบ: "+authUser.email, "ok");
   if(pendingAfterLogin){ const fn=pendingAfterLogin; pendingAfterLogin=null; setTimeout(fn,50); }
@@ -543,6 +563,20 @@ function initGoogleAuth(){
   if(!(window.google && google.accounts && google.accounts.id)){ return setTimeout(initGoogleAuth,300); }
   google.accounts.id.initialize({ client_id:GOOGLE_CLIENT_ID, callback:onGoogleCredential, auto_select:true });
   renderAuthUI();
+  if(authUser){ hideGate(); }
+  else { showGate(); try{ google.accounts.id.prompt(); }catch(e){} }   // ลองล็อกอินอัตโนมัติ (One Tap)
+}
+// ---------- Login gate (เต็มจอ) ----------
+function showGate(){ const g=$("authGate"); if(g){ g.classList.remove("hide"); renderGateButton(); } }
+function hideGate(){ const g=$("authGate"); if(g) g.classList.add("hide"); }
+function renderGateButton(){
+  const el=$("gateBtn"); if(!el) return; el.innerHTML="";
+  if(window.google && google.accounts && google.accounts.id){
+    google.accounts.id.renderButton(el, {theme:"filled_blue", size:"large", text:"signin_with", shape:"pill", width:260});
+  } else {
+    el.innerHTML='<div style="color:var(--red);font-size:12.5px">กำลังโหลด Google Sign-In…</div>';
+    setTimeout(renderGateButton, 400);
+  }
 }
 function renderAuthUI(){
   const box=document.getElementById("authBox"); if(!box) return;
@@ -560,6 +594,7 @@ function signOut(){
   authUser=null; saveAuth(); renderAuthUI();
   try{ google.accounts.id.disableAutoSelect(); }catch(e){}
   toast("ออกจากระบบแล้ว","ok");
+  showGate();
 }
 // เรียกก่อนบันทึก/แก้ไข: ถ้ายังไม่ล็อกอิน → เด้งให้ล็อกอินก่อน แล้วค่อยทำ after()
 function requireLogin(after){
@@ -1606,10 +1641,11 @@ $("authModal").onclick=e=>{ if(e.target===$("authModal")){ pendingAfterLogin=nul
 
 // ---------- Init ----------
 loadSettings();                 // คืนค่า URL/ชีต ที่บันทึกไว้ (localStorage)
-loadAuth();                     // คืนสถานะล็อกอินที่บันทึกไว้
 renderFilterPanel();            // สร้างตัวกรองของ workspace ปัจจุบัน (SN)
 buildHead(); fillSelects(); updateConn(); apply();
-renderAuthUI(); initGoogleAuth();   // เริ่ม Google Sign-In
+// บังคับล็อกอินทุกครั้ง: ไม่คืนสถานะจาก localStorage → เปิดมาเจอหน้า login ก่อน
+// (ผู้ที่เคยล็อกอินจะถูก Google auto sign-in ให้อัตโนมัติ ไม่ต้องกดซ้ำ)
+renderAuthUI(); showGate(); initGoogleAuth();
 // เชื่อมตรง + โหลดข้อมูลจาก workspace ปัจจุบันอัตโนมัติเมื่อเปิดแอป
 loadDirect();
 </script>
