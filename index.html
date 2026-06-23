@@ -238,8 +238,27 @@ tbody tr:hover{background:var(--brand-soft)}
   .detail-grid{grid-template-columns:1fr}
 }
 @media(max-width:560px){.stats{grid-template-columns:1fr}.seg-label{display:none}}
+
+/* Auth widget (sidebar) */
+.auth-box{margin-bottom:9px}
+.auth-signed{display:flex;align-items:center;gap:9px;background:var(--sidebar-2);border:1px solid var(--sidebar-line);padding:8px 10px;border-radius:10px}
+.auth-signed img{width:26px;height:26px;border-radius:50%;flex-shrink:0}
+.auth-signed .au-name{font-size:12px;color:#E9DFD2;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-signed .au-mail{font-size:10.5px;color:#A99D8D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-out{margin-left:auto;background:none;border:none;color:#A99D8D;cursor:pointer;font-size:15px;padding:2px 4px}
+.auth-out:hover{color:#fff}
+.auth-guest{font-size:11.5px;color:#A99D8D;background:var(--sidebar-2);border:1px solid var(--sidebar-line);padding:8px 11px;border-radius:10px;display:flex;align-items:center;gap:7px}
+/* Login modal */
+.auth-bg{display:none;position:fixed;inset:0;background:rgba(40,25,8,.5);z-index:320;align-items:center;justify-content:center;padding:20px}
+.auth-bg.show{display:flex}
+.auth-pop{background:var(--card);border-radius:18px;max-width:380px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 24px 60px -16px rgba(40,25,8,.4)}
+.auth-pop .au-ic{width:62px;height:62px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
+.auth-pop h3{font-size:18px;color:var(--ink);margin-bottom:8px}
+.auth-pop p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.auth-pop #gbtn{display:flex;justify-content:center;min-height:44px}
 </style>
 </head>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <body>
 <div class="app">
   <aside class="sidebar">
@@ -258,6 +277,7 @@ tbody tr:hover{background:var(--brand-soft)}
       <button class="nav-item tab" data-tab="settings"><svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.6"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.6"/></svg><span class="nav-tx">ตั้งค่าระบบ</span></button>
     </nav>
     <div class="sidebar-foot">
+      <div class="auth-box" id="authBox"></div>
       <div class="conn-pill"><span class="dot" id="connDot"></span><span id="connTxt">ยังไม่เชื่อมต่อ</span></div>
     </div>
   </aside>
@@ -474,6 +494,17 @@ tbody tr:hover{background:var(--brand-soft)}
   </div>
 </div>
 
+<!-- Login modal -->
+<div class="auth-bg" id="authModal">
+  <div class="auth-pop">
+    <div class="au-ic">🔐</div>
+    <h3>เข้าสู่ระบบก่อนบันทึก</h3>
+    <p>ระบบจะบันทึกว่าใครเป็นผู้กรอก/แก้ไขข้อมูล<br>กรุณาเข้าสู่ระบบด้วยบัญชี Google ของคุณ</p>
+    <div id="gbtn"></div>
+    <button class="btn btn-ghost btn-sm" id="authCancel" style="margin-top:16px">ยกเลิก</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -487,6 +518,61 @@ let settings = { url:"", sheet:"SN" };
 
 // Google Sheet สำหรับอ่านตรง (gviz) — ไม่ต้อง deploy Apps Script
 const SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
+
+// ========== Google Sign-In (บันทึกว่าใครเป็นผู้กรอก/แก้ไข) ==========
+const GOOGLE_CLIENT_ID = "904839558573-0rq8hunomu07ijtebmb65sdgubhgm9l4.apps.googleusercontent.com";
+let authUser = null;                 // {email, name, picture}
+let pendingAfterLogin = null;        // ฟังก์ชันที่จะทำต่อหลังล็อกอินสำเร็จ
+const AUTH_KEY = "itel_auth_user";
+function loadAuth(){ try{ const r=localStorage.getItem(AUTH_KEY); if(r) authUser=JSON.parse(r); }catch(e){} }
+function saveAuth(){ try{ authUser ? localStorage.setItem(AUTH_KEY, JSON.stringify(authUser)) : localStorage.removeItem(AUTH_KEY); }catch(e){} }
+function decodeJwt(t){
+  try{ const b=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
+    return JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){ return {}; }
+}
+function onGoogleCredential(resp){
+  const p = decodeJwt(resp.credential);
+  if(!p.email){ toast("เข้าสู่ระบบไม่สำเร็จ","err"); return; }
+  authUser = { email:p.email, name:p.name||p.email, picture:p.picture||"" };
+  saveAuth(); renderAuthUI();
+  document.getElementById("authModal").classList.remove("show");
+  toast("เข้าสู่ระบบ: "+authUser.email, "ok");
+  if(pendingAfterLogin){ const fn=pendingAfterLogin; pendingAfterLogin=null; setTimeout(fn,50); }
+}
+function initGoogleAuth(){
+  if(!(window.google && google.accounts && google.accounts.id)){ return setTimeout(initGoogleAuth,300); }
+  google.accounts.id.initialize({ client_id:GOOGLE_CLIENT_ID, callback:onGoogleCredential, auto_select:true });
+  renderAuthUI();
+}
+function renderAuthUI(){
+  const box=document.getElementById("authBox"); if(!box) return;
+  if(authUser){
+    box.innerHTML = `<div class="auth-signed">
+      ${authUser.picture?`<img src="${esc(authUser.picture)}" alt="">`:`<span class="dot on"></span>`}
+      <div style="overflow:hidden"><div class="au-name">${esc(authUser.name)}</div><div class="au-mail">${esc(authUser.email)}</div></div>
+      <button class="auth-out" id="authOut" title="ออกจากระบบ">⎋</button></div>`;
+    document.getElementById("authOut").onclick=signOut;
+  } else {
+    box.innerHTML = `<div class="auth-guest">👤 ยังไม่เข้าสู่ระบบ</div>`;
+  }
+}
+function signOut(){
+  authUser=null; saveAuth(); renderAuthUI();
+  try{ google.accounts.id.disableAutoSelect(); }catch(e){}
+  toast("ออกจากระบบแล้ว","ok");
+}
+// เรียกก่อนบันทึก/แก้ไข: ถ้ายังไม่ล็อกอิน → เด้งให้ล็อกอินก่อน แล้วค่อยทำ after()
+function requireLogin(after){
+  if(authUser){ after(); return; }
+  pendingAfterLogin = after;
+  const modal=document.getElementById("authModal"); modal.classList.add("show");
+  const g=document.getElementById("gbtn"); g.innerHTML="";
+  if(window.google && google.accounts && google.accounts.id){
+    google.accounts.id.renderButton(g, {theme:"filled_blue", size:"large", text:"signin_with", shape:"pill", width:240});
+  } else {
+    g.innerHTML = '<div style="color:var(--red);font-size:12.5px">โหลด Google Sign-In ไม่ได้ — ตรวจการเชื่อมต่อ/โดเมน</div>';
+  }
+}
 
 const COLS_SN = [
   {k:"node",   t:"Service NODE"},
@@ -863,6 +949,7 @@ function openDetail(i){
 }
 function saveEdit(){
   if(editIndex<0 || !DATA[editIndex]) return;
+  if(!authUser){ requireLogin(()=>saveEdit()); return; }   // ต้องล็อกอินก่อนแก้ไข
   const rec = DATA[editIndex];
   $("mBody").querySelectorAll("[data-k]").forEach(el=>{ rec[el.dataset.k] = el.value; });
   NUM_FIELDS.forEach(k=>{ if(rec[k]!=="" && rec[k]!=null && !isNaN(rec[k])) rec[k]=Number(rec[k]); });
@@ -881,7 +968,7 @@ async function updateToSheet(rec){
   const res = await fetch(settings.url, {
     method:"POST", mode:"cors",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body: JSON.stringify({action:"update", sheet:w.sheet, mode:w.mode, key:"node", record:rec})
+    body: JSON.stringify({action:"update", sheet:w.sheet, mode:w.mode, key:"node", record:rec, user:(authUser?authUser.email:"")})
   });
   const j = await res.json();
   if(!j || j.ok===false) throw new Error(j && j.error || "update failed");
@@ -960,6 +1047,7 @@ $("prov_sel").addEventListener("change", ()=>{
 // ---------- Form submit ----------
 $("entryForm").addEventListener("submit", async e=>{
   e.preventDefault();
+  if(!authUser){ requireLogin(()=>$("entryForm").requestSubmit()); return; }   // ต้องล็อกอินก่อนบันทึก
   const fd=new FormData(e.target), rec={};
   fd.forEach((v,k)=> rec[k]= v);
   // ประเภทงาน "อื่นๆ" → ใช้ข้อความที่พิมพ์เองแทน
@@ -999,7 +1087,7 @@ async function postToSheet(rec){
   const res = await fetch(settings.url, {
     method:"POST", mode:"cors",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body: JSON.stringify({action:"add", sheet:settings.sheet, record:rec})
+    body: JSON.stringify({action:"add", sheet:settings.sheet, record:rec, user:(authUser?authUser.email:"")})
   });
   const j = await res.json();
   if(!j || j.ok===false) throw new Error(j && j.error || "post failed");
@@ -1273,7 +1361,8 @@ function doPost(e){
     var body = JSON.parse(e.postData.contents);
     var sh = getSheet_(body.sheet);
     var rec = body.record || {};
-    if(body.action === "update"){ return (body.mode==="so") ? updateRowSO_(sh, rec) : updateRow_(sh, rec, body.key || "node"); }
+    var who = String(body.user || "");
+    if(body.action === "update"){ return (body.mode==="so") ? updateRowSO_(sh, rec, who) : updateRow_(sh, rec, body.key || "node", who); }
     var head = sh.getDataRange().getValues()[0];
     if(!head || head.length === 0 || (head.length===1 && head[0]==="")){
       head = Object.keys(rec);
@@ -1291,12 +1380,13 @@ function doPost(e){
         if(row[c] instanceof Date){ sh.getRange(newRow, c+1).setNumberFormat(sh.getRange(prevRow, c+1).getNumberFormat()); }
       }
     }
+    stampAudit_(sh, 1, newRow, who, true);
     return json_({ok:true, appended:row.length});
   }catch(err){ return json_({ok:false, error:String(err)}); }
 }
 
 // แก้ไขแถวตามค่า key (เช่น node) อัปเดตเฉพาะคอลัมน์ที่ส่งมา
-function updateRow_(sh, rec, keyField){
+function updateRow_(sh, rec, keyField, who){
   var values = sh.getDataRange().getValues();
   var head = values[0];
   var keyCol = -1;
@@ -1309,6 +1399,7 @@ function updateRow_(sh, rec, keyField){
         var key = headerToKey_(head[cc]);
         if(rec.hasOwnProperty(key)){ sh.getRange(r+1, cc+1).setValue(rec[key]!=null?toDate_(rec[key]):""); }
       }
+      stampAudit_(sh, 1, r+1, who, false);
       return json_({ok:true, updated:r+1});
     }
   }
@@ -1330,7 +1421,7 @@ function soColMap_(header){
     note:find("หมายเหตุ"), doc_link:find("Link เก็บเอกสาร")
   };
 }
-function updateRowSO_(sh, rec){
+function updateRowSO_(sh, rec, who){
   var values = sh.getDataRange().getValues();
   if(values.length < 3) return json_({ok:false, error:"ชีต Service Order ไม่มีข้อมูล"});
   var header = values[1].map(function(v){ return v==null?"":String(v).replace(/\\s+/g," ").trim(); });
@@ -1344,10 +1435,36 @@ function updateRowSO_(sh, rec){
         var col=map[k];
         if(col>=0 && rec.hasOwnProperty(k)){ sh.getRange(r+1, col+1).setValue(rec[k]!=null?toDate_(rec[k]):""); }
       }
+      stampAudit_(sh, 2, r+1, who, false);
       return json_({ok:true, updated:r+1, mode:"so"});
     }
   }
   return json_({ok:false, error:"ไม่พบแถว VPN = "+target});
+}
+
+// Audit: ผู้บันทึก / เวลา (สร้างคอลัมน์ให้อัตโนมัติถ้ายังไม่มี)
+var AUDIT_COLS = { created_by:"ผู้บันทึก", created_at:"วันเวลาที่บันทึก", updated_by:"แก้ไขล่าสุดโดย", updated_at:"วันเวลาที่แก้ไข" };
+function ensureAuditCols_(sh, headerRow){
+  var lastCol = sh.getLastColumn();
+  var header = sh.getRange(headerRow,1,1,lastCol).getValues()[0].map(function(v){ return String(v).replace(/\\s+/g," ").trim(); });
+  var cols = {};
+  for(var key in AUDIT_COLS){
+    var label = AUDIT_COLS[key];
+    var i = header.indexOf(label);
+    if(i<0){ lastCol++; sh.getRange(headerRow,lastCol).setValue(label); i=lastCol-1; header.push(label); }
+    cols[key]=i;
+  }
+  return cols;
+}
+function stampAudit_(sh, headerRow, dataRow, who, isNew){
+  var cols = ensureAuditCols_(sh, headerRow);
+  var now = new Date();
+  if(isNew){
+    sh.getRange(dataRow, cols.created_by+1).setValue(who);
+    sh.getRange(dataRow, cols.created_at+1).setValue(now).setNumberFormat("d/M/yyyy HH:mm");
+  }
+  sh.getRange(dataRow, cols.updated_by+1).setValue(who);
+  sh.getRange(dataRow, cols.updated_at+1).setValue(now).setNumberFormat("d/M/yyyy HH:mm");
 }
 
 // แปลงสตริงวันที่ ISO "yyyy-mm-dd" → Date จริง (เพื่อให้ชีตแสดงเป็นวันที่ไทย เช่น "12 มิ.ย. 26")
@@ -1483,10 +1600,16 @@ $("dashRefresh").onclick=async()=>{
   DATA = WORKSPACES[WS].cache || []; fillSelects(); apply();   // sync หน้าค้นหาด้วย
 };
 
+// ---------- Auth wiring ----------
+$("authCancel").onclick=()=>{ pendingAfterLogin=null; $("authModal").classList.remove("show"); };
+$("authModal").onclick=e=>{ if(e.target===$("authModal")){ pendingAfterLogin=null; $("authModal").classList.remove("show"); } };
+
 // ---------- Init ----------
 loadSettings();                 // คืนค่า URL/ชีต ที่บันทึกไว้ (localStorage)
+loadAuth();                     // คืนสถานะล็อกอินที่บันทึกไว้
 renderFilterPanel();            // สร้างตัวกรองของ workspace ปัจจุบัน (SN)
 buildHead(); fillSelects(); updateConn(); apply();
+renderAuthUI(); initGoogleAuth();   // เริ่ม Google Sign-In
 // เชื่อมตรง + โหลดข้อมูลจาก workspace ปัจจุบันอัตโนมัติเมื่อเปิดแอป
 loadDirect();
 </script>
