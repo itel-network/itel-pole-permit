@@ -34,7 +34,7 @@ body{font-family:"IBM Plex Sans Thai","IBM Plex Sans","Segoe UI",sans-serif;back
 /* ===== Sidebar ===== */
 .sidebar{width:256px;flex-shrink:0;background:var(--sidebar);color:#EDE6DC;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-right:1px solid #100C09}
 .brand{display:flex;align-items:center;gap:13px;padding:22px 22px 20px}
-.logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,var(--brand-2),var(--brand-deep));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;letter-spacing:.5px;box-shadow:0 6px 16px -4px rgba(232,106,28,.6)}
+.logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,var(--brand-2),var(--brand-deep));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:12px;letter-spacing:0;box-shadow:0 6px 16px -4px rgba(232,106,28,.6)}
 .logo-text{font-size:19px;font-weight:700;letter-spacing:.4px;color:#fff;line-height:1.1}
 .logo-sub{font-size:10.5px;color:var(--sidebar-muted);font-weight:400;margin-top:3px;letter-spacing:.2px}
 .nav{padding:8px 14px;flex:1;overflow-y:auto}
@@ -260,7 +260,7 @@ tbody tr:hover{background:var(--brand-soft)}
 .gate{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#2a231c 0%,#171109 100%);display:flex;align-items:center;justify-content:center;padding:20px}
 .gate.hide{display:none}
 .gate-card{background:var(--card);border-radius:20px;max-width:410px;width:100%;padding:42px 34px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.6)}
-.gate-logo{width:62px;height:62px;border-radius:15px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:25px;letter-spacing:-1px;margin:0 auto 20px;box-shadow:0 8px 20px -6px rgba(232,106,28,.5)}
+.gate-logo{width:62px;height:62px;border-radius:15px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;letter-spacing:0;margin:0 auto 20px;box-shadow:0 8px 20px -6px rgba(232,106,28,.5)}
 .gate-card h2{font-size:18px;color:var(--ink);margin-bottom:10px;line-height:1.35}
 .gate-card p{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.6}
 .gate-card #gateBtn{display:flex;justify-content:center;min-height:44px}
@@ -272,7 +272,7 @@ tbody tr:hover{background:var(--brand-soft)}
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="logo-mark">IT</div>
+      <div class="logo-mark">ITEL</div>
       <div>
         <div class="logo-text">ITEL</div>
         <div class="logo-sub">ระบบขออนุญาตพาดสาย</div>
@@ -506,7 +506,7 @@ tbody tr:hover{background:var(--brand-soft)}
 <!-- Login gate (เต็มจอ — บังคับล็อกอินก่อนใช้งาน) -->
 <div class="gate" id="authGate">
   <div class="gate-card">
-    <div class="gate-logo">IT</div>
+    <div class="gate-logo">ITEL</div>
     <h2>ITEL — ระบบจัดการงานขออนุญาตพาดสาย</h2>
     <p>กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเข้าใช้งาน<br>ระบบจะบันทึกว่าใครเป็นผู้กรอก/แก้ไขข้อมูล</p>
     <div id="gateBtn"></div>
@@ -1069,7 +1069,14 @@ function toggleCoreOther(){
   if(sel.value==="อื่นๆ"){ other.style.display="block"; other.required=true; }
   else { other.style.display="none"; other.required=false; other.value=""; }
 }
-$("core_sel").addEventListener("change", ()=>{ toggleCoreOther(); if($("core_sel").value==="อื่นๆ") $("core_other").focus(); });
+// เลือก Core → เติม Diameter (mm.) อัตโนมัติ (144/อื่นๆ กรอกเอง)
+const CORE_DIAMETER = { "12":8.5, "24":10.5, "60":12, "120":14.8, "216":16.7 };
+$("core_sel").addEventListener("change", ()=>{
+  toggleCoreOther();
+  if($("core_sel").value==="อื่นๆ") $("core_other").focus();
+  const d = CORE_DIAMETER[$("core_sel").value];
+  if(d!=null) $("entryForm").diameter.value = d;   // ค่าที่แมปไว้ → เติมให้
+});
 
 // ---------- จังหวัด (select 77 จังหวัด) → เติม "การไฟฟ้าเขต" อัตโนมัติ ----------
 $("prov_sel").innerHTML = '<option value="">— เลือก —</option>'
