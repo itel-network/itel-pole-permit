@@ -534,7 +534,9 @@ let DATA = [];           // all rows
 let view = [];           // filtered+sorted
 let sortKey = null, sortDir = 1;
 let page = 1, pageSize = 10;
-let settings = { url:"", sheet:"SN" };
+// Apps Script Web App URL (ค่าเริ่มต้น) — ทุกคนได้สิทธิ์ "อ่าน+เขียน" อัตโนมัติ ไม่ต้องตั้งค่าเอง
+const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwe2aPjZSzkBtxHipuTvB2fo-QWdUTuxbcg_djvamWg1Aj_ByMJ1XRxWr25egKrGLvr/exec";
+let settings = { url:DEFAULT_WEBAPP_URL, sheet:"SN" };
 
 // Google Sheet สำหรับอ่านตรง (gviz) — ไม่ต้อง deploy Apps Script
 const SHEET_ID = "1NYecnRx9H7nvskicAfEQXdLfkYrdUMhtpvtwszi58co";
@@ -1316,7 +1318,7 @@ function saveSettings(){
 function loadSettings(){
   try{
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if(raw){ const s = JSON.parse(raw); settings.url = s.url||""; settings.sheet = s.sheet||"SN"; }
+    if(raw){ const s = JSON.parse(raw); settings.url = s.url||DEFAULT_WEBAPP_URL; settings.sheet = s.sheet||"SN"; }
   }catch(e){}
   $("set_url").value = settings.url || "";
   $("set_sheet").value = settings.sheet || "SN";
