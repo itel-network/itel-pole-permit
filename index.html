@@ -631,19 +631,19 @@ const COLS_SN = [
 const EDIT_FIELDS_SN = [
   {k:"node", t:"Service NODE"},
   {k:"year", t:"ปี (ค.ศ.)", type:"number"},
-  {k:"type", t:"ประเภทงาน", widget:"combo", opts:["ขยายโครงข่าย","จัดระเบียบสาย","Replace Cable","สร้างท่อร้อยสาย"]},
+  {k:"type", t:"ประเภทงาน", widget:"select-other", opts:["ขยายโครงข่าย","จัดระเบียบสาย","Replace Cable","สร้างท่อร้อยสาย"]},
   {k:"route", t:"ชื่อเส้นทาง"},
-  {k:"prov", t:"จังหวัด", widget:"combo", opts:()=>THAI_PROVINCES},
+  {k:"prov", t:"จังหวัด", widget:"select", opts:()=>THAI_PROVINCES},
   {k:"zone", t:"การไฟฟ้าเขต"},
   {k:"peazone", t:"เขตการไฟฟ้า"},
-  {k:"core", t:"ขนาดสาย Core", widget:"combo", opts:["12","24","60","120","144","216"]},
+  {k:"core", t:"ขนาดสาย Core", widget:"select-other", opts:["12","24","60","120","144","216"]},
   {k:"diameter", t:"Diameter (mm.)", type:"number"},
   {k:"km", t:"ระยะทาง (km)", type:"number"},
   {k:"poles", t:"จำนวน (ต้น)", type:"number"},
   {k:"poles_green", t:"จำนวนเสาเขียว", type:"number"},
   {k:"poles_red", t:"จำนวนเสาแดง", type:"number"},
   {k:"poles_gray", t:"จำนวนเสาเทา", type:"number"},
-  {k:"no_permit", t:"ไม่ขออนุญาต", widget:"combo", opts:["ใช่","ไม่"]},
+  {k:"no_permit", t:"ไม่ขออนุญาต", widget:"select", opts:["ใช่","ไม่"]},
   {k:"nbtc_issue_date", t:"วันที่ออกหนังสือ NBTC", type:"date"},
   {k:"nbtc_no", t:"เลขที่ NBTC"},
   {k:"nbtc_permit_date", t:"วันที่อนุญาต NBTC", type:"date"},
@@ -683,11 +683,11 @@ const COLS_SO = [
 ];
 const EDIT_FIELDS_SO = [
   {k:"node",t:"VPN"},{k:"year",t:"ปี"},{k:"route",t:"ชื่อเส้นทาง"},
-  {k:"prov",t:"จังหวัด",widget:"combo",opts:()=>THAI_PROVINCES},
-  {k:"core",t:"Core",widget:"combo",opts:["12","24","60","120","144","216"]},
+  {k:"prov",t:"จังหวัด",widget:"select",opts:()=>THAI_PROVINCES},
+  {k:"core",t:"Core",widget:"select-other",opts:["12","24","60","120","144","216"]},
   {k:"diameter",t:"Diameter (mm.)"},{k:"km",t:"ระยะทาง (km)"},{k:"poles",t:"จำนวน (ต้น)"},
   {k:"zone",t:"การไฟฟ้าเขต"},{k:"peazone",t:"เขตการไฟฟ้า"},
-  {k:"no_permit",t:"ไม่ขออนุญาต",widget:"combo",opts:["ใช่","ไม่"]},
+  {k:"no_permit",t:"ไม่ขออนุญาต",widget:"select",opts:["ใช่","ไม่"]},
   {k:"nbtc_no",t:"เลขที่ NBTC"},{k:"nbtc_approve_no",t:"เลขที่เห็นชอบ NBTC"},
   {k:"pea_doc_no",t:"เลขที่หนังสือออก"},{k:"tams_no",t:"เลขที่คำร้อง (TAMS)"},
   {k:"status",t:"สถานะ PEA/MEA"},{k:"permit_doc_no",t:"เลขที่หนังสืออนุญาตพาดสาย"},{k:"permit_no",t:"เลขที่ อนุญาต"},
@@ -960,12 +960,19 @@ function renderModalBody(){
       const disp = f.k==="status" ? statusBadge(r[f.k]) : (v===""?"—":esc(v));
       return `<div class="det"><div class="k">${esc(f.t)}</div><div class="vv">${disp}</div></div>`;
     }
-    // ฟิลด์ที่หน้ากรอกข้อมูลใหม่ใช้ dropdown → ให้แก้ไขเป็น dropdown แบบเดียวกัน (เลือกได้/พิมพ์เองได้)
-    if(f.widget==="combo"){
+    // ฟิลด์ที่หน้ากรอกข้อมูลใหม่ใช้ dropdown → ให้แก้ไขเป็น select dropdown แบบเดียวกัน
+    if(f.widget==="select" || f.widget==="select-other"){
       const opts = typeof f.opts==="function" ? f.opts() : f.opts;
-      const dlId = "dl_m_"+f.k;
-      const ctrl = `<input data-k="${f.k}" list="${dlId}" value="${esc(v)}"><datalist id="${dlId}">`
-        + opts.map(o=>`<option value="${esc(o)}">`).join("") + `</datalist>`;
+      const matched = opts.includes(v);
+      const isOther = f.widget==="select-other" && v!=="" && !matched;
+      let optHtml = `<option value="">— เลือก —</option>`;
+      if(f.widget==="select" && v!=="" && !matched) optHtml += `<option value="${esc(v)}" selected>${esc(v)}</option>`;   // ค่าเดิมที่ไม่ตรงลิสต์ → คงไว้ไม่ให้หาย
+      optHtml += opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("");
+      let ctrl = `<select data-k="${f.k}"${f.widget==="select-other"?' data-other-toggle="1"':""}>${optHtml}`;
+      if(f.widget==="select-other") ctrl += `<option value="อื่นๆ" ${isOther?"selected":""}>อื่นๆ (ระบุเอง)</option>`;
+      ctrl += `</select>`;
+      if(f.widget==="select-other")
+        ctrl += `<input data-k-other="${f.k}" placeholder="ระบุ${esc(f.t)}..." style="margin-top:8px;${isOther?"":"display:none"}" value="${isOther?esc(v):""}">`;
       return `<div class="det"><div class="k">${esc(f.t)}</div>${ctrl}</div>`;
     }
     // วันที่ที่ไม่ใช่ ISO ให้เป็นช่องข้อความ กันค่าหาย
@@ -986,6 +993,16 @@ function renderModalBody(){
     // เลือก Core → เติม Diameter อัตโนมัติ
     const coreEl=$("mBody").querySelector('[data-k="core"]'), diaEl=$("mBody").querySelector('[data-k="diameter"]');
     if(coreEl && diaEl) coreEl.addEventListener("change", ()=>{ const d=CORE_DIAMETER[coreEl.value.trim()]; if(d!=null) diaEl.value=d; });
+    // เลือก "อื่นๆ (ระบุเอง)" → แสดงช่องพิมพ์เอง
+    $("mBody").querySelectorAll('select[data-other-toggle]').forEach(sel=>{
+      const other = sel.parentElement.querySelector('[data-k-other]');
+      if(!other) return;
+      sel.addEventListener("change", ()=>{
+        const isOther = sel.value==="อื่นๆ";
+        other.style.display = isOther ? "block" : "none";
+        if(isOther) other.focus();
+      });
+    });
   }
   // ปุ่ม/ข้อความ footer ตามโหมด
   const canEdit = ws().canEdit;
@@ -1012,6 +1029,11 @@ function saveEdit(){
   if(!authUser){ requireLogin(()=>saveEdit()); return; }   // ต้องล็อกอินก่อนแก้ไข
   const rec = DATA[editIndex];
   $("mBody").querySelectorAll("[data-k]").forEach(el=>{ rec[el.dataset.k] = el.value; });
+  // เลือก "อื่นๆ (ระบุเอง)" → ใช้ข้อความที่พิมพ์เองแทน
+  $("mBody").querySelectorAll("[data-k-other]").forEach(el=>{
+    const k = el.dataset.kOther;
+    if(rec[k]==="อื่นๆ") rec[k] = el.value.trim();
+  });
   NUM_FIELDS.forEach(k=>{ if(rec[k]!=="" && rec[k]!=null && !isNaN(rec[k])) rec[k]=Number(rec[k]); });
   fillSelects(); apply();
   if(settings.url){
