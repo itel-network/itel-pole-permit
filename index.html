@@ -547,11 +547,31 @@ let authUser = null;                 // {email, name, picture}
 let authToken = null;                // Google ID token (ส่งให้ Apps Script ตรวจสิทธิ์ฝั่งเซิร์ฟเวอร์)
 let pendingAfterLogin = null;        // ฟังก์ชันที่จะทำต่อหลังล็อกอินสำเร็จ
 const AUTH_KEY = "itel_auth_user";
+const AUTH_TOKEN_KEY = "itel_auth_token";
 function loadAuth(){ try{ const r=localStorage.getItem(AUTH_KEY); if(r) authUser=JSON.parse(r); }catch(e){} }
-function saveAuth(){ try{ authUser ? localStorage.setItem(AUTH_KEY, JSON.stringify(authUser)) : localStorage.removeItem(AUTH_KEY); }catch(e){} }
+function saveAuth(){
+  try{
+    if(authUser){ localStorage.setItem(AUTH_KEY, JSON.stringify(authUser)); }
+    else { localStorage.removeItem(AUTH_KEY); }
+    if(authToken){ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }
+    else { localStorage.removeItem(AUTH_TOKEN_KEY); }
+  }catch(e){}
+}
+function clearAuth(){ authUser=null; authToken=null; saveAuth(); }
 function decodeJwt(t){
   try{ const b=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
     return JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){ return {}; }
+}
+// คืนสถานะล็อกอินจาก localStorage ถ้า token ยังไม่หมดอายุ (Google ID token อายุ ~1 ชม.)
+// → ไม่ต้องล็อกอินใหม่ทุกครั้งที่ F5 แต่ถ้าทิ้งไว้นานเกิน ~1 ชม. token จะหมดอายุ ต้องล็อกอินใหม่
+function restoreAuth(){
+  try{
+    const u = localStorage.getItem(AUTH_KEY), t = localStorage.getItem(AUTH_TOKEN_KEY);
+    if(!u || !t){ clearAuth(); return; }
+    const p = decodeJwt(t);
+    if(!p.exp || p.exp*1000 <= Date.now()){ clearAuth(); return; }   // token หมดอายุ
+    authUser = JSON.parse(u); authToken = t;
+  }catch(e){ clearAuth(); }
 }
 function onGoogleCredential(resp){
   const p = decodeJwt(resp.credential);
@@ -595,7 +615,7 @@ function renderAuthUI(){
   }
 }
 function signOut(){
-  authUser=null; authToken=null; saveAuth(); renderAuthUI();
+  clearAuth(); renderAuthUI();
   try{ google.accounts.id.disableAutoSelect(); }catch(e){}
   toast("ออกจากระบบแล้ว","ok");
   showGate();
@@ -1040,7 +1060,7 @@ function saveEdit(){
     updateToSheet(rec)
       .then(()=>toast("บันทึกการแก้ไขไป Google Sheets แล้ว","ok"))
       .catch(err=>{
-        if(err.authError){ toast(err.message||"ไม่มีสิทธิ์แก้ไข","err"); if(err.needLogin){ authUser=null; authToken=null; renderAuthUI(); showGate(); } }
+        if(err.authError){ toast(err.message||"ไม่มีสิทธิ์แก้ไข","err"); if(err.needLogin){ clearAuth(); renderAuthUI(); showGate(); } }
         else toast("ส่งไป Sheets ไม่สำเร็จ: "+err.message,"err");
       });
   } else {
@@ -1159,7 +1179,7 @@ $("entryForm").addEventListener("submit", async e=>{
   if(settings.url){
     try{ await postToSheet(rec); saved=true; viaSheet=true; }
     catch(err){
-      if(err.authError){ toast(err.message||"ไม่มีสิทธิ์บันทึก","err"); if(err.needLogin){ authUser=null; authToken=null; renderAuthUI(); showGate(); } }
+      if(err.authError){ toast(err.message||"ไม่มีสิทธิ์บันทึก","err"); if(err.needLogin){ clearAuth(); renderAuthUI(); showGate(); } }
       else { DATA.unshift(rec); saved=true; toast("ส่งไป Sheets ไม่สำเร็จ — เก็บใน memory แทน","err"); }
     }
   } else {
@@ -1770,9 +1790,12 @@ $("authModal").onclick=e=>{ if(e.target===$("authModal")){ pendingAfterLogin=nul
 loadSettings();                 // คืนค่า URL/ชีต ที่บันทึกไว้ (localStorage)
 renderFilterPanel();            // สร้างตัวกรองของ workspace ปัจจุบัน (SN)
 buildHead(); fillSelects(); updateConn(); apply();
-// บังคับล็อกอินทุกครั้ง: ไม่คืนสถานะจาก localStorage → เปิดมาเจอหน้า login ก่อน
-// (ผู้ที่เคยล็อกอินจะถูก Google auto sign-in ให้อัตโนมัติ ไม่ต้องกดซ้ำ)
-renderAuthUI(); showGate(); initGoogleAuth();
+// คืนสถานะล็อกอินจาก localStorage ถ้า token ยังไม่หมดอายุ (กัน F5 แล้วต้องล็อกอินใหม่ทุกครั้ง)
+// token หมดอายุ ~1 ชม. หลังล็อกอิน ถ้าทิ้งไว้นานเกินนั้นจะต้องล็อกอินใหม่
+restoreAuth();
+renderAuthUI();
+if(!authUser) showGate();   // ถ้ายังไม่มี session ที่ใช้ได้ → โชว์หน้า login ทันที (กันจอกะพริบถ้า session ยังไม่หมดอายุ)
+initGoogleAuth();
 // เชื่อมตรง + โหลดข้อมูลจาก workspace ปัจจุบันอัตโนมัติเมื่อเปิดแอป
 loadDirect();
 </script>
