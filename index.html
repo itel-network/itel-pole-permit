@@ -631,19 +631,19 @@ const COLS_SN = [
 const EDIT_FIELDS_SN = [
   {k:"node", t:"Service NODE"},
   {k:"year", t:"ปี (ค.ศ.)", type:"number"},
-  {k:"type", t:"ประเภทงาน"},
+  {k:"type", t:"ประเภทงาน", widget:"combo", opts:["ขยายโครงข่าย","จัดระเบียบสาย","Replace Cable","สร้างท่อร้อยสาย"]},
   {k:"route", t:"ชื่อเส้นทาง"},
-  {k:"prov", t:"จังหวัด"},
+  {k:"prov", t:"จังหวัด", widget:"combo", opts:()=>THAI_PROVINCES},
   {k:"zone", t:"การไฟฟ้าเขต"},
   {k:"peazone", t:"เขตการไฟฟ้า"},
-  {k:"core", t:"ขนาดสาย Core", type:"number"},
+  {k:"core", t:"ขนาดสาย Core", widget:"combo", opts:["12","24","60","120","144","216"]},
   {k:"diameter", t:"Diameter (mm.)", type:"number"},
   {k:"km", t:"ระยะทาง (km)", type:"number"},
   {k:"poles", t:"จำนวน (ต้น)", type:"number"},
   {k:"poles_green", t:"จำนวนเสาเขียว", type:"number"},
   {k:"poles_red", t:"จำนวนเสาแดง", type:"number"},
   {k:"poles_gray", t:"จำนวนเสาเทา", type:"number"},
-  {k:"no_permit", t:"ไม่ขออนุญาต"},
+  {k:"no_permit", t:"ไม่ขออนุญาต", widget:"combo", opts:["ใช่","ไม่"]},
   {k:"nbtc_issue_date", t:"วันที่ออกหนังสือ NBTC", type:"date"},
   {k:"nbtc_no", t:"เลขที่ NBTC"},
   {k:"nbtc_permit_date", t:"วันที่อนุญาต NBTC", type:"date"},
@@ -682,9 +682,12 @@ const COLS_SO = [
   {k:"status",  t:"สถานะ PEA/MEA", badge:true},
 ];
 const EDIT_FIELDS_SO = [
-  {k:"node",t:"VPN"},{k:"year",t:"ปี"},{k:"route",t:"ชื่อเส้นทาง"},{k:"prov",t:"จังหวัด"},
-  {k:"core",t:"Core"},{k:"diameter",t:"Diameter (mm.)"},{k:"km",t:"ระยะทาง (km)"},{k:"poles",t:"จำนวน (ต้น)"},
-  {k:"zone",t:"การไฟฟ้าเขต"},{k:"peazone",t:"เขตการไฟฟ้า"},{k:"no_permit",t:"ไม่ขออนุญาต"},
+  {k:"node",t:"VPN"},{k:"year",t:"ปี"},{k:"route",t:"ชื่อเส้นทาง"},
+  {k:"prov",t:"จังหวัด",widget:"combo",opts:()=>THAI_PROVINCES},
+  {k:"core",t:"Core",widget:"combo",opts:["12","24","60","120","144","216"]},
+  {k:"diameter",t:"Diameter (mm.)"},{k:"km",t:"ระยะทาง (km)"},{k:"poles",t:"จำนวน (ต้น)"},
+  {k:"zone",t:"การไฟฟ้าเขต"},{k:"peazone",t:"เขตการไฟฟ้า"},
+  {k:"no_permit",t:"ไม่ขออนุญาต",widget:"combo",opts:["ใช่","ไม่"]},
   {k:"nbtc_no",t:"เลขที่ NBTC"},{k:"nbtc_approve_no",t:"เลขที่เห็นชอบ NBTC"},
   {k:"pea_doc_no",t:"เลขที่หนังสือออก"},{k:"tams_no",t:"เลขที่คำร้อง (TAMS)"},
   {k:"status",t:"สถานะ PEA/MEA"},{k:"permit_doc_no",t:"เลขที่หนังสืออนุญาตพาดสาย"},{k:"permit_no",t:"เลขที่ อนุญาต"},
@@ -957,6 +960,14 @@ function renderModalBody(){
       const disp = f.k==="status" ? statusBadge(r[f.k]) : (v===""?"—":esc(v));
       return `<div class="det"><div class="k">${esc(f.t)}</div><div class="vv">${disp}</div></div>`;
     }
+    // ฟิลด์ที่หน้ากรอกข้อมูลใหม่ใช้ dropdown → ให้แก้ไขเป็น dropdown แบบเดียวกัน (เลือกได้/พิมพ์เองได้)
+    if(f.widget==="combo"){
+      const opts = typeof f.opts==="function" ? f.opts() : f.opts;
+      const dlId = "dl_m_"+f.k;
+      const ctrl = `<input data-k="${f.k}" list="${dlId}" value="${esc(v)}"><datalist id="${dlId}">`
+        + opts.map(o=>`<option value="${esc(o)}">`).join("") + `</datalist>`;
+      return `<div class="det"><div class="k">${esc(f.t)}</div>${ctrl}</div>`;
+    }
     // วันที่ที่ไม่ใช่ ISO ให้เป็นช่องข้อความ กันค่าหาย
     const type = (f.type==="date" && v && !isISO(v)) ? "text" : (f.type||"text");
     let ctrl;
@@ -968,6 +979,14 @@ function renderModalBody(){
   $("mBody").querySelectorAll(".copy-link, .copyable").forEach(el=>{
     el.onclick=()=>{ const box=el.closest(".det").querySelector(".vv"); copyText(box?box.textContent:""); };
   });
+  // เลือกจังหวัด → เติม "การไฟฟ้าเขต" อัตโนมัติ (เหมือนหน้ากรอกข้อมูลใหม่)
+  if(editing){
+    const provEl=$("mBody").querySelector('[data-k="prov"]'), zoneEl=$("mBody").querySelector('[data-k="zone"]');
+    if(provEl && zoneEl) provEl.addEventListener("change", ()=>{ const z=PROV_ZONE[provEl.value.trim()]; if(z!==undefined) zoneEl.value=z; });
+    // เลือก Core → เติม Diameter อัตโนมัติ
+    const coreEl=$("mBody").querySelector('[data-k="core"]'), diaEl=$("mBody").querySelector('[data-k="diameter"]');
+    if(coreEl && diaEl) coreEl.addEventListener("change", ()=>{ const d=CORE_DIAMETER[coreEl.value.trim()]; if(d!=null) diaEl.value=d; });
+  }
   // ปุ่ม/ข้อความ footer ตามโหมด
   const canEdit = ws().canEdit;
   $("mEdit").style.display = (canEdit && !editing) ? "" : "none";
