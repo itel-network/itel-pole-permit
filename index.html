@@ -1083,7 +1083,6 @@ $("mEdit").onclick=()=>{ modalEdit=true; renderModalBody(); };
 $("mSave").onclick=saveEdit;
 $("mCancel").onclick=()=>{ if(modalEdit){ modalEdit=false; renderModalBody(); } else closeModal(); };
 $("mClose").onclick=closeModal;
-$("modal").onclick=e=>{ if(e.target===$("modal")) closeModal(); };
 
 // ---------- Filter panel (สร้างจาก workspace ปัจจุบัน) ----------
 function renderFilterPanel(){
