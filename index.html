@@ -416,8 +416,6 @@ tbody tr:hover{background:var(--brand-soft)}
             <div><label class="fl">จำนวนเสาเขียว</label><input name="poles_green" type="number" min="0"></div>
             <div><label class="fl">จำนวนเสาแดง</label><input name="poles_red" type="number" min="0"></div>
             <div><label class="fl">จำนวนเสาเทา</label><input name="poles_gray" type="number" min="0"></div>
-            <div><label class="fl">ไม่ขออนุญาต</label>
-              <select name="no_permit"><option value="">ไม่ระบุ</option><option>ใช่</option><option>ไม่</option></select></div>
           </div>
         </div>
         <div class="card form-card">
@@ -663,7 +661,6 @@ const EDIT_FIELDS_SN = [
   {k:"poles_green", t:"จำนวนเสาเขียว", type:"number"},
   {k:"poles_red", t:"จำนวนเสาแดง", type:"number"},
   {k:"poles_gray", t:"จำนวนเสาเทา", type:"number"},
-  {k:"no_permit", t:"ไม่ขออนุญาต", widget:"select", opts:["ใช่","ไม่"]},
   {k:"nbtc_issue_date", t:"วันที่ออกหนังสือ NBTC", type:"date"},
   {k:"nbtc_no", t:"เลขที่ NBTC"},
   {k:"nbtc_permit_date", t:"วันที่อนุญาต NBTC", type:"date"},
@@ -707,7 +704,7 @@ const EDIT_FIELDS_SO = [
   {k:"core",t:"Core",widget:"select-other",opts:["12","24","60","120","144","216"]},
   {k:"diameter",t:"Diameter (mm.)"},{k:"km",t:"ระยะทาง (km)"},{k:"poles",t:"จำนวน (ต้น)"},
   {k:"zone",t:"การไฟฟ้าเขต"},{k:"peazone",t:"เขตการไฟฟ้า"},
-  {k:"no_permit",t:"ไม่ขออนุญาต",widget:"select",opts:["ใช่","ไม่"]},
+  {k:"no_permit",t:"ขอ Permission",widget:"select",opts:["ใช่","ไม่"]},
   {k:"nbtc_no",t:"เลขที่ NBTC"},{k:"nbtc_approve_no",t:"เลขที่เห็นชอบ NBTC"},
   {k:"pea_doc_no",t:"เลขที่หนังสือออก"},{k:"tams_no",t:"เลขที่คำร้อง (TAMS)"},
   {k:"status",t:"สถานะ PEA/MEA"},{k:"permit_doc_no",t:"เลขที่หนังสืออนุญาตพาดสาย"},{k:"permit_no",t:"เลขที่ อนุญาต"},
@@ -1251,7 +1248,7 @@ function soColIdx(header){
     diameter: prov>=0 ? prov+2 : -1,
     km: prov>=0 ? prov+3 : -1,
     poles: prov>=0 ? prov+4 : -1,
-    zone: find("เขต"), peazone: find("เขตการไฟฟ้า"), no_permit: find("ไม่ขออนุญาต"),
+    zone: find("เขต"), peazone: find("เขตการไฟฟ้า"), no_permit: find("ขอ Permission"),
     nbtc_no: find("เลขที่ NBTC"), nbtc_approve_no: find("เลขที่เห็นชอบ NBTC"),
     pea_doc_no: find("เลขที่หนังสือออก"), tams_no: find("เลขที่คำร้อง (TAMS)"),
     status: find("สถานะ PEA,MEA"), permit_doc_no: find("เลขที่หนังสืออนุญาตพาดสาย"),
@@ -1347,7 +1344,7 @@ const HEADER_ALIAS = {
   "Diameter (mm.)":"diameter","ระยะทาง (km)":"km","ระยะทาง":"km",
   "จำนวน (ต้น)":"poles","จำนวนเสา":"poles",
   "จำนวน เสาเขียว":"poles_green","จำนวน เสาแดง":"poles_red","จำนวน เสาเทา":"poles_gray",
-  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone","ไม่ขออนุญาต":"no_permit",
+  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone",
   "วันที่ออกหนังสือ NBTC":"nbtc_issue_date","เลขที่ NBTC":"nbtc_no",
   "วันที่อนุญาต NBTC":"nbtc_permit_date","เลขที่อนุญาต NBTC":"nbtc_permit_no",
   "วันที่ออกหนังสือ PEA/MEA":"pea_issue_date",
@@ -1493,7 +1490,7 @@ var HEADER_ALIAS = {
   "Diameter (mm.)":"diameter","ระยะทาง (km)":"km","ระยะทาง":"km",
   "จำนวน (ต้น)":"poles","จำนวนเสา":"poles",
   "จำนวน เสาเขียว":"poles_green","จำนวน เสาแดง":"poles_red","จำนวน เสาเทา":"poles_gray",
-  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone","ไม่ขออนุญาต":"no_permit",
+  "เขต":"zone","การไฟฟ้าเขต":"zone","เขตการไฟฟ้า":"peazone",
   "วันที่ออกหนังสือ NBTC":"nbtc_issue_date","เลขที่ NBTC":"nbtc_no",
   "วันที่อนุญาต NBTC":"nbtc_permit_date","เลขที่อนุญาต NBTC":"nbtc_permit_no",
   "วันที่ออกหนังสือ PEA/MEA":"pea_issue_date",
@@ -1594,7 +1591,7 @@ function soColMap_(header){
   return {
     node:node, year:node>0?node-1:-1, route:find("ชื่อเส้นทาง"), prov:prov,
     core:prov>=0?prov+1:-1, diameter:prov>=0?prov+2:-1, km:prov>=0?prov+3:-1, poles:prov>=0?prov+4:-1,
-    zone:find("เขต"), peazone:find("เขตการไฟฟ้า"), no_permit:find("ไม่ขออนุญาต"),
+    zone:find("เขต"), peazone:find("เขตการไฟฟ้า"), no_permit:find("ขอ Permission"),
     nbtc_no:find("เลขที่ NBTC"), nbtc_approve_no:find("เลขที่เห็นชอบ NBTC"),
     pea_doc_no:find("เลขที่หนังสือออก"), tams_no:find("เลขที่คำร้อง (TAMS)"),
     status:find("สถานะ PEA,MEA"), permit_doc_no:find("เลขที่หนังสืออนุญาตพาดสาย"),
