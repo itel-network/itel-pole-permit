@@ -919,7 +919,7 @@ function renderTable(){
       return "<tr data-i='"+idx+"'>"+COLS.map(c=>{
         let v=r[c.k];
         if(c.badge) return "<td>"+statusBadge(v)+"</td>";
-        if(c.num){ const n=parseFloat(v); return "<td class='num-cell'>"+(isNaN(n)?"—":n.toLocaleString(undefined,{maximumFractionDigits:3}))+"</td>"; }
+        if(c.num){ const n=parseFloat(v); return "<td class='num-cell'>"+(isNaN(n)?"—":n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))+"</td>"; }
         return "<td>"+(v==null||v===""?"—":esc(v))+"</td>";
       }).join("")+"</tr>";
     }).join("");
